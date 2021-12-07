@@ -960,3 +960,113 @@ class TowerAlertMsg(NotificationPing):
         self._region = system_db.constellation.region.name
         self.force_at_ping = True
 
+"""
+StructureAnchoring
+ownerCorpLinkData:
+- showinfo
+- 2
+- 680022174
+ownerCorpName: DEFCON.
+solarsystemID: 30003795
+structureID: &id001 1030452747286
+structureShowInfoData:
+- showinfo
+- 35825
+- *id001
+structureTypeID: 35825
+timeLeft: 8999632416
+vulnerableTime: 9000000000
+"""
+
+"""
+StructureWentLowPower
+solarsystemID: 30000197
+structureID: &id001 1036261887208
+structureShowInfoData:
+- showinfo
+- 35832
+- *id001
+structureTypeID: 35832
+"""
+
+"""
+StructureWentHighPower
+solarsystemID: 30004597
+structureID: &id001 1037513467358
+structureShowInfoData:
+- showinfo
+- 35841
+- *id001
+structureTypeID: 35841
+"""
+
+"""
+StructureUnanchoring
+ownerCorpLinkData:
+- showinfo
+- 2
+- 680022174
+ownerCorpName: DEFCON.
+solarsystemID: 30004665
+structureID: &id001 1034879252790
+structureShowInfoData:
+- showinfo
+- 37534
+- *id001
+structureTypeID: 37534
+timeLeft: 27000531441
+"""
+
+"""
+isAbandoned: false
+ownerCorpLinkData:
+- showinfo
+- 2
+- 680022174
+ownerCorpName: DEFCON.
+solarsystemID: 30002354
+structureID: &id001 1036278739415
+structureShowInfoData:
+- showinfo
+- 35825
+- *id001
+structureTypeID: 35825
+"""
+
+"""
+StructureFuelAlert
+listOfTypesAndQty:
+- - 166
+  - 4247
+solarsystemID: 30000197
+structureID: &id001 1036261887208
+structureShowInfoData:
+- showinfo
+- 35832
+- *id001
+structureTypeID: 35832
+"""
+
+"""
+TowerResourceAlertMsg
+allianceID: 1900696668
+corpID: 680022174
+moonID: 40066395
+solarSystemID: 30001041
+typeID: 16214
+wants:
+- quantity: 780
+  typeID: 4246
+"""
+
+"""
+OrbitalAttacked
+aggressorAllianceID: 99005675
+aggressorCorpID: 98081962
+aggressorID: 437509777
+planetID: 40066319
+planetTypeID: 12
+shieldLevel: 0.9897753365599623
+solarSystemID: 30001039
+typeID: 2233
+"""
