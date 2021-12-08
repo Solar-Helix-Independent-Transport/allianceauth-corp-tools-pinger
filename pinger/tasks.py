@@ -24,6 +24,8 @@ from pinger.models import DiscordWebhook, Ping, PingerConfig
 
 from http.cookiejar import http2time
 
+from django_redis import get_redis_connection
+
 from . import notifications
 
 TZ_STRING = "%Y-%m-%dT%H:%M:%SZ"
@@ -217,7 +219,7 @@ def corporation_notification_update(self, corporation_id):
 
             pingable_notifs = []
             pinged_already = set(list(Ping.objects.values_list("notification_id", flat=True)))
-            cuttoff = timezone.now() - datetime.timedelta(hours=96)
+            cuttoff = timezone.now() - datetime.timedelta(hours=1)
 
             for n in notifs:
                 if n.get('timestamp') > cuttoff:
@@ -348,7 +350,7 @@ def _get_cooloff_time(wh_id):
 @shared_task(bind=True, max_retries=None)
 def send_ping(self, ping_id):
     ping_ob = Ping.objects.get(id=ping_id)
-    saved = cache.get_client("default").sadd("ct-pinger-ping-lock-set", f"{ping_id}{ping_ob.notification_id}")
+    saved = get_redis_connection("default").sadd("ct-pinger-ping-lock-set", f"{ping_id}{ping_ob.notification_id}")
     if saved == 0:
         logger.info(f"PINGER: DUPLICATE skipping {ping_ob.notification_id}")
         ping_ob.ping_sent = True
@@ -386,14 +388,14 @@ def send_ping(self, ping_id):
         ping_ob.ping_sent = True
         ping_ob.save()
     elif response.status_code == 429:
-        saved = cache.get_client("default").srem("ct-pinger-ping-lock-set", f"{ping_id}{ping_ob.notification_id}")
+        saved = get_redis_connection("default").srem("ct-pinger-ping-lock-set", f"{ping_id}{ping_ob.notification_id}")
         errors = json.loads(response.content.decode('utf-8'))
         wh_sleep = (int(errors['retry_after']) / 1000) + 0.15
         logger.warning(f"Webhook rate limited: trying again in {wh_sleep} seconds...")
         _set_wh_cooloff(ping_ob.hook.id, wh_sleep)
         self.retry(countdown=wh_sleep)
     else:
-        saved = cache.get_client("default").srem("ct-pinger-ping-lock-set", f"{ping_id}{ping_ob.notification_id}")
+        saved = get_redis_connection("default").srem("ct-pinger-ping-lock-set", f"{ping_id}{ping_ob.notification_id}")
         logger.error(f"{ping_ob.notification_id} failed ({response.status_code}) to: {url}")
         response.raise_for_status()
     # TODO 404/403/500 etc etc etc etc
