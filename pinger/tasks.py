@@ -8,7 +8,6 @@ import requests
 from celery import shared_task, chain
 from celery.exceptions import TimeLimitExceeded
 from django.core.cache import cache
-from esi.errors import NotModifiedError
 from allianceauth.services.tasks import QueueOnce
 from django.utils import timezone
 
@@ -194,46 +193,43 @@ def corporation_notification_update(self, corporation_id):
         types = notifications.get_available_types()
         #update notifications for this character inline.
 
-        try:
-            notifs = esi.client.Character.get_characters_character_id_notifications(character_id=character_id,
-                                                                                    token=access_token)
-            notifs.request_config.also_return_response = True
-            notifs, response = notifs.results(cache_on_not_modified=False)
+        notifs = esi.client.Character.get_characters_character_id_notifications(character_id=character_id,
+                                                                                token=access_token)
+        notifs.request_config.also_return_response = True
+        notifs, response = notifs.results()
 
-            now = time.mktime(timezone.now().timetuple())
-            next_expire = http2time(response.headers.get('Expires'))
-                
-            secs_till_expire = next_expire - now
+        now = time.mktime(timezone.now().timetuple())
+        next_expire = http2time(response.headers.get('Expires'))
+            
+        secs_till_expire = next_expire - now
 
-            if next_expire == last_expire:
-                logger.info(f"PINGER: CACHE: Same Cache as last update.")
-            if secs_till_expire < 30:
-                logger.warning(f"PINGER: CACHE: Almost expired cache {token.character_name}, retrying with this character in {secs_till_expire + 1} seconds")
-                _set_cache_data_for_corp(corporation_id, last_character, all_chars_in_corp, 0)
-                self.retry(countdown=secs_till_expire+1)
-            elif secs_till_expire < 570:
-                logger.warning(f"PINGER: CACHE: Mid cache cycle {token.character_name}, retrying with next character")
-                self.retry(countdown=1)
-                
-            _set_last_cache_expire(character_id, next_expire)
+        if next_expire == last_expire:
+            logger.info(f"PINGER: CACHE: Same Cache as last update.")
+        if secs_till_expire < 30:
+            logger.warning(f"PINGER: CACHE: Almost expired cache {token.character_name}, retrying with this character in {secs_till_expire + 1} seconds")
+            _set_cache_data_for_corp(corporation_id, last_character, all_chars_in_corp, 0)
+            self.retry(countdown=secs_till_expire+1)
+        elif secs_till_expire < 570:
+            logger.warning(f"PINGER: CACHE: Mid cache cycle {token.character_name}, retrying with next character")
+            self.retry(countdown=1)
+            
+        _set_last_cache_expire(character_id, next_expire)
 
-            pingable_notifs = []
-            pinged_already = set(list(Ping.objects.values_list("notification_id", flat=True)))
-            cuttoff = timezone.now() - datetime.timedelta(hours=1)
+        pingable_notifs = []
+        pinged_already = set(list(Ping.objects.values_list("notification_id", flat=True)))
+        cuttoff = timezone.now() - datetime.timedelta(hours=1)
 
-            for n in notifs:
-                if n.get('timestamp') > cuttoff:
-                    if n.get('type') in types.keys():
-                        if n.get('notification_id') not in pinged_already:
-                            pingable_notifs.append(n)
+        for n in notifs:
+            if n.get('timestamp') > cuttoff:
+                if n.get('type') in types.keys():
+                    if n.get('notification_id') not in pinged_already:
+                        pingable_notifs.append(n)
 
-            logger.info(f"PINGER: {corporation_id} Pings to process: {len(pingable_notifs)}")
+        logger.info(f"PINGER: {corporation_id} Pings to process: {len(pingable_notifs)}")
 
-            # did we get any?
-            process_notifications.apply_async(priority=TASK_PRIO, args=[character_id, pingable_notifs])
+        # did we get any?
+        process_notifications.apply_async(priority=TASK_PRIO, args=[character_id, pingable_notifs])
 
-        except NotModifiedError:
-            logger.info(f"PINGER: No new notifications {token.character_name}")
 
         _, _, min_delay = get_settings()
 
