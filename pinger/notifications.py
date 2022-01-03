@@ -1536,6 +1536,8 @@ class CorpAppAcceptMsg(NotificationPing):
                           footer=footer,
                           colour=3066993)
 
+        self._corp = self._notification.character.character.corporation_id
+        self._alli = self._notification.character.character.alliance_id
         self.force_at_ping = False
 
 
@@ -1587,6 +1589,8 @@ class CorpAppInvitedMsg(NotificationPing):
                           footer=footer,
                           colour=3066993)
 
+        self._corp = self._notification.character.character.corporation_id
+        self._alli = self._notification.character.character.alliance_id
         self.force_at_ping = False
 
 
@@ -1633,6 +1637,8 @@ class CorpAppNewMsg(NotificationPing):
                           footer=footer,
                           colour=1752220)
 
+        self._corp = self._notification.character.character.corporation_id
+        self._alli = self._notification.character.character.alliance_id
         self.force_at_ping = False
 
 
@@ -1678,4 +1684,6 @@ class CorpAppRejectMsg(NotificationPing):
                           footer=footer,
                           colour=15158332)
 
+        self._corp = self._notification.character.character.corporation_id
+        self._alli = self._notification.character.character.alliance_id
         self.force_at_ping = False
