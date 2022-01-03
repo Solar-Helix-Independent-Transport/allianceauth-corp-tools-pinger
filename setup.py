@@ -1,3 +1,4 @@
+from pinger import __version__
 import os
 from setuptools import find_packages, setup
 install_requires = [
@@ -9,7 +10,7 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setup(
     name='corptools-pinger',
-    version='0.0.2',
+    version=__version__,
     packages=find_packages(),
     include_package_data=True,
     install_requires=install_requires,
