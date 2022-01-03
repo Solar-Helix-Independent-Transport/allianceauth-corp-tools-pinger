@@ -1,4 +1,5 @@
 from logging import exception
+from allianceauth.eveonline.models import EveCharacter
 from django.db import models
 import yaml
 import json
@@ -1507,6 +1508,12 @@ class CorpAppAcceptMsg(NotificationPing):
         title = "Corp Application Accepted"
         app_char, _ = ctm.EveName.objects.get_or_create_from_esi(
             self._data['charID'])
+        try:
+            eve_main = EveCharacter.objects.get(
+                character_id=self._data['charID']).character_ownership.user.profile.main_character
+            eve_main = f"[{eve_main.character_name}](https://evewho.com/character/{eve_main.character_id}/) [ [{eve_main.corporation_ticker}](https://evewho.com/corporation/{eve_main.corporation_id}) ]"
+        except:
+            eve_main = "Unknown"
 
         body = f"```{strip_tags(self._data['applicationText'])}```\n"
 
@@ -1519,7 +1526,8 @@ class CorpAppAcceptMsg(NotificationPing):
                   "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
 
         fields = [{'name': 'Character', 'value': f"[{app_char}](https://evewho.com/character/{app_char.eve_id}/)", 'inline': True},
-                  {'name': 'Corporation', 'value': corp_name, 'inline': True}]
+                  {'name': 'Corporation', 'value': corp_name, 'inline': True},
+                  {'name': 'Main Character', 'value': eve_main, 'inline': True}]
 
         self.package_ping(title,
                           body,
@@ -1549,6 +1557,12 @@ class CorpAppInvitedMsg(NotificationPing):
             self._data['charID'])
         invoked_by, _ = ctm.EveName.objects.get_or_create_from_esi(
             self._data['invokingCharID'])
+        try:
+            eve_main = EveCharacter.objects.get(
+                character_id=self._data['charID']).character_ownership.user.profile.main_character
+            eve_main = f"[{eve_main.character_name}](https://evewho.com/character/{eve_main.character_id}/) [ [{eve_main.corporation_ticker}](https://evewho.com/corporation/{eve_main.corporation_id}) ]"
+        except:
+            eve_main = "Unknown"
 
         body = f"```{strip_tags(self._data['applicationText'])}```\n"
 
@@ -1563,7 +1577,8 @@ class CorpAppInvitedMsg(NotificationPing):
         fields = [{'name': 'Character', 'value': f"[{app_char}](https://evewho.com/character/{app_char.eve_id}/)", 'inline': True},
                   {'name': 'Invoking Character',
                       'value': invoked_by.name, 'inline': True},
-                  {'name': 'Corporation', 'value': corp_name, 'inline': True}, ]
+                  {'name': 'Corporation', 'value': corp_name, 'inline': True},
+                  {'name': 'Main Character', 'value': eve_main, 'inline': True}]
 
         self.package_ping(title,
                           body,
@@ -1590,6 +1605,12 @@ class CorpAppNewMsg(NotificationPing):
         title = "New Corp Application"
         app_char, _ = ctm.EveName.objects.get_or_create_from_esi(
             self._data['charID'])
+        try:
+            eve_main = EveCharacter.objects.get(
+                character_id=self._data['charID']).character_ownership.user.profile.main_character
+            eve_main = f"[{eve_main.character_name}](https://evewho.com/character/{eve_main.character_id}/) [ [{eve_main.corporation_ticker}](https://evewho.com/corporation/{eve_main.corporation_id}) ]"
+        except:
+            eve_main = "Unknown"
 
         body = f"```{strip_tags(self._data['applicationText'])}```\n"
 
@@ -1602,7 +1623,8 @@ class CorpAppNewMsg(NotificationPing):
                   "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
 
         fields = [{'name': 'Character', 'value': f"[{app_char}](https://evewho.com/character/{app_char.eve_id}/)", 'inline': True},
-                  {'name': 'Corporation', 'value': corp_name, 'inline': True}]
+                  {'name': 'Corporation', 'value': corp_name, 'inline': True},
+                  {'name': 'Main Character', 'value': eve_main, 'inline': True}]
 
         self.package_ping(title,
                           body,
@@ -1629,7 +1651,12 @@ class CorpAppRejectMsg(NotificationPing):
         title = "Corp Application Rejected"
         app_char, _ = ctm.EveName.objects.get_or_create_from_esi(
             self._data['charID'])
-
+        try:
+            eve_main = EveCharacter.objects.get(
+                character_id=self._data['charID']).character_ownership.user.profile.main_character
+            eve_main = f"[{eve_main.character_name}](https://evewho.com/character/{eve_main.character_id}/) [ [{eve_main.corporation_ticker}](https://evewho.com/corporation/{eve_main.corporation_id}) ]"
+        except:
+            eve_main = "Unknown"
         body = f"```{strip_tags(self._data['applicationText'])}```\n"
 
         corp_id = self._notification.character.character.corporation_id
@@ -1641,7 +1668,8 @@ class CorpAppRejectMsg(NotificationPing):
                   "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
 
         fields = [{'name': 'Character', 'value': f"[{app_char}](https://evewho.com/character/{app_char.eve_id}/)", 'inline': True},
-                  {'name': 'Corporation', 'value': corp_name, 'inline': True}]
+                  {'name': 'Corporation', 'value': corp_name, 'inline': True},
+                  {'name': 'Main Character', 'value': eve_main, 'inline': True}]
 
         self.package_ping(title,
                           body,
