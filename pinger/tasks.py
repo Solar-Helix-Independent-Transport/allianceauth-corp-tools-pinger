@@ -183,9 +183,14 @@ def corporation_notification_update(self, corporation_id):
             for i in all_hr_chars:
                 if i in all_chars_in_corp:
                     hr_presented = True
+                    logger.info(
+                        f"PINGER: HR {corporation_id} We have HR covered")
                     break
 
             if not hr_presented:
+                logger.info(
+                    f"PINGER: HR {corporation_id} Adding a HR character")
+
                 all_chars_in_corp.add(all_hr_chars[0])
 
         all_chars_in_corp = list(all_chars_in_corp)
