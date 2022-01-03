@@ -179,7 +179,8 @@ class AllAnchoringMsg(NotificationPing):
                           body,
                           self._notification.timestamp,
                           fields=fields,
-                          footer=footer)
+                          footer=footer,
+                          colour=15277667)
 
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
@@ -262,7 +263,7 @@ class MoonminingExtractionFinished(NotificationPing):
                           self._notification.timestamp,
                           fields=fields,
                           footer=footer,
-                          colour=6881024)
+                          colour=3066993)
 
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
@@ -341,7 +342,7 @@ class MoonminingAutomaticFracture(NotificationPing):
                           self._notification.timestamp,
                           fields=fields,
                           footer=footer,
-                          colour=6881024)
+                          colour=15844367)
 
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
@@ -424,7 +425,7 @@ class MoonminingLaserFired(NotificationPing):
                           self._notification.timestamp,
                           fields=fields,
                           footer=footer,
-                          colour=16756480)
+                          colour=1752220)
 
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
@@ -516,7 +517,7 @@ class MoonminingExtractionStarted(NotificationPing):
                           self._notification.timestamp,
                           fields=fields,
                           footer=footer,
-                          colour=16756480)
+                          colour=1752220)
 
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
@@ -590,7 +591,7 @@ class StructureLostShields(NotificationPing):
                           self._notification.timestamp,
                           fields=fields,
                           footer=footer,
-                          colour=16756480)
+                          colour=7419530)
 
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
@@ -664,7 +665,7 @@ class StructureLostArmor(NotificationPing):
                           self._notification.timestamp,
                           fields=fields,
                           footer=footer,
-                          colour=16756480)
+                          colour=7419530)
 
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
@@ -773,7 +774,7 @@ class StructureUnderAttack(NotificationPing):
                           self._notification.timestamp,
                           fields=fields,
                           footer=footer,
-                          colour=16756480)
+                          colour=15158332)
 
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
@@ -833,7 +834,7 @@ class SovStructureReinforced(NotificationPing):
                           self._notification.timestamp,
                           fields=fields,
                           footer=footer,
-                          colour=16756480)
+                          colour=7419530)
 
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
@@ -883,7 +884,7 @@ class EntosisCaptureStarted(NotificationPing):
                           self._notification.timestamp,
                           fields=fields,
                           footer=footer,
-                          colour=16756480)
+                          colour=15158332)
 
         self._corp = self._notification.character.character.corporation_id
         self._region = system_db.constellation.region.name
@@ -950,7 +951,7 @@ class OwnershipTransferred(NotificationPing):
                           self._notification.timestamp,
                           fields=fields,
                           footer=footer,
-                          colour=16756480)
+                          colour=10181046)
 
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
@@ -1033,7 +1034,7 @@ class TowerAlertMsg(NotificationPing):
                           self._notification.timestamp,
                           fields=fields,
                           footer=footer,
-                          colour=16756480)
+                          colour=15105570)
 
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
@@ -1113,7 +1114,7 @@ class StructureAnchoring(NotificationPing):
                           self._notification.timestamp,
                           fields=fields,
                           footer=footer,
-                          colour=16756480)
+                          colour=1752220)
 
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
@@ -1183,7 +1184,7 @@ class StructureWentLowPower(NotificationPing):
                           self._notification.timestamp,
                           fields=fields,
                           footer=footer,
-                          colour=16756480)
+                          colour=15158332)
 
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
@@ -1253,7 +1254,7 @@ class StructureWentHighPower(NotificationPing):
                           self._notification.timestamp,
                           fields=fields,
                           footer=footer,
-                          colour=16756480)
+                          colour=3066993)
 
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
@@ -1332,7 +1333,7 @@ class StructureUnanchoring(NotificationPing):
                           self._notification.timestamp,
                           fields=fields,
                           footer=footer,
-                          colour=16756480)
+                          colour=10181046)
 
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
@@ -1408,7 +1409,7 @@ class StructureDestroyed(NotificationPing):
                           self._notification.timestamp,
                           fields=fields,
                           footer=footer,
-                          colour=16756480)
+                          colour=15158332)
 
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
@@ -1504,9 +1505,6 @@ class CorpAppAcceptMsg(NotificationPing):
     """
 
     def build_ping(self):
-        system_db = ctm.MapSystem.objects.get(
-            system_id=self._data['solarsystemID'])
-
         title = "Corp Application Accepted"
         app_char, _ = ctm.EveName.objects.get_or_create_from_esi(
             self._data['charID'])
@@ -1529,7 +1527,7 @@ class CorpAppAcceptMsg(NotificationPing):
                           self._notification.timestamp,
                           fields=fields,
                           footer=footer,
-                          colour=16756480)
+                          colour=3066993)
 
         self.force_at_ping = False
 
@@ -1547,8 +1545,6 @@ class CorpAppInvitedMsg(NotificationPing):
     """
 
     def build_ping(self):
-        ctm.MapSystem.objects.get(system_id=self._data['solarsystemID'])
-
         title = "Corp Invite Sent"
         app_char, _ = ctm.EveName.objects.get_or_create_from_esi(
             self._data['charID'])
@@ -1574,7 +1570,7 @@ class CorpAppInvitedMsg(NotificationPing):
                           self._notification.timestamp,
                           fields=fields,
                           footer=footer,
-                          colour=16756480)
+                          colour=3066993)
 
         self.force_at_ping = False
 
@@ -1591,9 +1587,6 @@ class CorpAppNewMsg(NotificationPing):
     """
 
     def build_ping(self):
-        system_db = ctm.MapSystem.objects.get(
-            system_id=self._data['solarsystemID'])
-
         title = "New Corp Application"
         app_char, _ = ctm.EveName.objects.get_or_create_from_esi(
             self._data['charID'])
@@ -1616,7 +1609,7 @@ class CorpAppNewMsg(NotificationPing):
                           self._notification.timestamp,
                           fields=fields,
                           footer=footer,
-                          colour=16756480)
+                          colour=1752220)
 
         self.force_at_ping = False
 
@@ -1633,9 +1626,6 @@ class CorpAppRejectMsg(NotificationPing):
     """
 
     def build_ping(self):
-        system_db = ctm.MapSystem.objects.get(
-            system_id=self._data['solarsystemID'])
-
         title = "Corp Application Rejected"
         app_char, _ = ctm.EveName.objects.get_or_create_from_esi(
             self._data['charID'])
@@ -1658,6 +1648,6 @@ class CorpAppRejectMsg(NotificationPing):
                           self._notification.timestamp,
                           fields=fields,
                           footer=footer,
-                          colour=16756480)
+                          colour=15158332)
 
         self.force_at_ping = False
