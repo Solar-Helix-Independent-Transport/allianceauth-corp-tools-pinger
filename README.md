@@ -7,16 +7,19 @@ filter on/off regions/const/system/corps/alliances/types/strucutre type/notifica
 configurable @ settings
 
 Structures:
-  - attack/reinforce
-  - low fuel
-  - abandoned
+
+- attack/reinforce
+- low fuel
+- abandoned
 
 pos:
-  - attack/reinforce
-  - low fuel
+
+- attack/reinforce
+- low fuel
 
 sov:
-  - attacks
-  - pos anchoring
+
+- attacks
+- pos anchoring
 
 add timers to the timer board as needed

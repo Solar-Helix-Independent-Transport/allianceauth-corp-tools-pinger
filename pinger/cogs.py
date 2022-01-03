@@ -18,10 +18,12 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class Pinger(commands.Cog):
     """
     All about pinger!
     """
+
     def __init__(self, bot):
         self.bot = bot
 
@@ -36,16 +38,17 @@ class Pinger(commands.Cog):
         locs = EveLocation.objects.filter(location_name=input_name)
         if locs.count() > 0:
             for loc in locs:
-                muted, _ = MutedStructure.objects.update_or_create(structure_id=loc.location_id)
+                muted, _ = MutedStructure.objects.update_or_create(
+                    structure_id=loc.location_id)
             await ctx.message.reply(f"`{input_name}` Muted for 48hours")
         else:
             await ctx.message.reply(f"`{input_name}` Could not find structure")
 
-
     @commands.command(pass_context=True, hidden=True)
     async def pingerstats(self, ctx):
 
-        if ctx.message.author.id not in app_settings.get_admins():  # https://media1.tenor.com/images/1796f0fa0b4b07e51687fad26a2ce735/tenor.gif
+        # https://media1.tenor.com/images/1796f0fa0b4b07e51687fad26a2ce735/tenor.gif
+        if ctx.message.author.id not in app_settings.get_admins():
             return await ctx.message.add_reaction(chr(0x1F44E))
 
         if ctx.message.channel.id not in settings.ADMIN_DISCORD_BOT_CHANNELS:
@@ -55,13 +58,13 @@ class Pinger(commands.Cog):
 
         # get all new corps not in cache
         all_member_corps_in_audit = CharacterAudit.objects.filter(character__character_ownership__user__profile__state__name__in=["Member"],
-                                                                characterroles__station_manager=True,
-                                                                active=True)
-        
+                                                                  characterroles__station_manager=True,
+                                                                  active=True)
+
         filters = []
         if len(allis) > 0:
             filters.append(Q(character__alliance_id__in=allis))
-        
+
         if len(corps) > 0:
             filters.append(Q(character__corporation_id__in=corps))
 
@@ -71,7 +74,8 @@ class Pinger(commands.Cog):
                 query |= q
             all_member_corps_in_audit = all_member_corps_in_audit.filter(query)
 
-        corps = all_member_corps_in_audit.values_list("character__corporation_id", "character__corporation_name")
+        corps = all_member_corps_in_audit.values_list(
+            "character__corporation_id", "character__corporation_name")
 
         done = {}
         seen_cid = set()
@@ -80,9 +84,11 @@ class Pinger(commands.Cog):
                 seen_cid.add(c[0])
                 last_char, chars, last_update = _get_cache_data_for_corp(c[0])
                 if last_char:
-                    last_char_model = EveCharacter.objects.get(character_id=last_char)
+                    last_char_model = EveCharacter.objects.get(
+                        character_id=last_char)
                     if last_update < 1:
-                        done[c[1]] = f"{c[1]} Total Characters : {len(chars)}, Last Character: {last_char_model.character_name} ({last_char}), Next Update: {last_update} Seconds"
+                        done[c[1]
+                             ] = f"{c[1]} Total Characters : {len(chars)}, Last Character: {last_char_model.character_name} ({last_char}), Next Update: {last_update} Seconds"
                 else:
                     done[c[1]] = f"{c[1]} Not Updated Yet"
 
@@ -91,13 +97,15 @@ class Pinger(commands.Cog):
         sorted_keys.sort()
 
         n = 10
-        chunks = [list(sorted_keys[i * n:(i + 1) * n]) for i in range((len(sorted_keys) + n - 1) // n)]
+        chunks = [list(sorted_keys[i * n:(i + 1) * n])
+                  for i in range((len(sorted_keys) + n - 1) // n)]
 
         for c in chunks:
             output = ""
             for i in c:
                 output += done[i] + "\n"
             await ctx.send(output)
+
 
 def setup(bot):
     bot.add_cog(Pinger(bot))

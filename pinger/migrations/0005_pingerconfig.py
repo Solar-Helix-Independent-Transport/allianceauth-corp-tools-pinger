@@ -14,10 +14,14 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='PingerConfig',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('min_time_between_updates', models.IntegerField(default=60, help_text='Minimmum time between tasks for corp.')),
-                ('AllianceLimiter', models.ManyToManyField(blank=True, help_text='Alliances to put into the queue', to='eveonline.EveAllianceInfo')),
-                ('CorporationLimiter', models.ManyToManyField(blank=True, help_text='Corporations to put into the queue', to='eveonline.EveCorporationInfo')),
+                ('id', models.AutoField(auto_created=True,
+                 primary_key=True, serialize=False, verbose_name='ID')),
+                ('min_time_between_updates', models.IntegerField(
+                    default=60, help_text='Minimmum time between tasks for corp.')),
+                ('AllianceLimiter', models.ManyToManyField(
+                    blank=True, help_text='Alliances to put into the queue', to='eveonline.EveAllianceInfo')),
+                ('CorporationLimiter', models.ManyToManyField(
+                    blank=True, help_text='Corporations to put into the queue', to='eveonline.EveCorporationInfo')),
             ],
         ),
     ]

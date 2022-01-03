@@ -10,7 +10,6 @@ from allianceauth.eveonline.models import EveCharacter
 from pinger.tasks import get_settings, _get_cache_data_for_corp
 
 
-
 class Command(BaseCommand):
     help = 'Spit out stats for pinger'
 
@@ -23,13 +22,13 @@ class Command(BaseCommand):
 
         # get all new corps not in cache
         all_member_corps_in_audit = CharacterAudit.objects.filter(character__character_ownership__user__profile__state__name__in=["Member"],
-                                                                characterroles__station_manager=True,
-                                                                active=True)
-        
+                                                                  characterroles__station_manager=True,
+                                                                  active=True)
+
         filters = []
         if len(allis) > 0:
             filters.append(Q(character__alliance_id__in=allis))
-        
+
         if len(corps) > 0:
             filters.append(Q(character__corporation_id__in=corps))
 
@@ -39,8 +38,8 @@ class Command(BaseCommand):
                 query |= q
             all_member_corps_in_audit = all_member_corps_in_audit.filter(query)
 
-        corps = all_member_corps_in_audit.values_list("character__corporation_id", "character__corporation_name")
-
+        corps = all_member_corps_in_audit.values_list(
+            "character__corporation_id", "character__corporation_name")
 
         done = {}
         seen_cid = set()
@@ -49,8 +48,10 @@ class Command(BaseCommand):
                 seen_cid.add(c[0])
                 last_char, chars, last_update = _get_cache_data_for_corp(c[0])
                 if last_char:
-                    last_char_model = EveCharacter.objects.get(character_id=last_char)
-                    done[c[1]] = f"{c[1]} Total Characters : {len(chars)}, Last Character: {last_char_model.character_name} ({last_char}), Next Update: {last_update} Seconds"
+                    last_char_model = EveCharacter.objects.get(
+                        character_id=last_char)
+                    done[c[1]
+                         ] = f"{c[1]} Total Characters : {len(chars)}, Last Character: {last_char_model.character_name} ({last_char}), Next Update: {last_update} Seconds"
                 else:
                     done[c[1]] = f"{c[1]} Not Updated Yet"
 
@@ -59,4 +60,3 @@ class Command(BaseCommand):
         sorted_keys.sort()
         for id in sorted_keys:
             self.stdout.write(done[id])
-

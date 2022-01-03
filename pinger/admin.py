@@ -7,6 +7,7 @@ from django.utils.html import format_html
 
 admin.site.register(models.Ping)
 
+
 class DiscordWebhookAdmin(admin.ModelAdmin):
     filter_horizontal = ('ping_types',
                          'corporation_filter',
@@ -49,7 +50,8 @@ class DiscordWebhookAdmin(admin.ModelAdmin):
     _regions.short_description = 'Region Filter'
 
     def _corps(self, obj):
-        my_corps = [x.corporation_name for x in obj.corporation_filter.order_by('corporation_name')]
+        my_corps = [x.corporation_name for x in obj.corporation_filter.order_by(
+            'corporation_name')]
 
         return self._list_2_html_w_tooltips(
             my_corps,
@@ -58,7 +60,8 @@ class DiscordWebhookAdmin(admin.ModelAdmin):
     _corps.short_description = 'Corporation Filter'
 
     def _allis(self, obj):
-        my_allis = [x.alliance_name for x in obj.alliance_filter.order_by('alliance_name')]
+        my_allis = [
+            x.alliance_name for x in obj.alliance_filter.order_by('alliance_name')]
 
         return self._list_2_html_w_tooltips(
             my_allis,
@@ -68,13 +71,15 @@ class DiscordWebhookAdmin(admin.ModelAdmin):
 
     list_display = ['nickname', '_types', '_regions', '_corps', '_allis']
 
+
 admin.site.register(models.DiscordWebhook, DiscordWebhookAdmin)
 
 admin.site.register(models.PingType)
 
+
 class SettingsAdmin(admin.ModelAdmin):
     filter_horizontal = ('AllianceLimiter',
                          'CorporationLimiter')
+
+
 admin.site.register(models.PingerConfig, SettingsAdmin)
-
-

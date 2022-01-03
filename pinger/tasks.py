@@ -40,6 +40,7 @@ corporations = []
 min_time = 60
 last_update = 0
 
+
 def get_settings():
     pc = PingerConfig.objects.get(pk=1)
     alliances = pc.AllianceLimiter.all().values_list('alliance_id')
@@ -47,6 +48,7 @@ def get_settings():
     min_time = pc.min_time_between_updates
 
     return alliances, corporations, min_time
+
 
 def _get_head_id(char_id):
     _head = Notification.objects.filter(
@@ -63,23 +65,30 @@ def _get_head_id(char_id):
 def _build_char_cache_etag_id(char_id):
     return f"ct-pingger-char-etag-{char_id}"
 
+
 def _get_last_cache_etag(char_id):
     return cache.get(_build_char_cache_etag_id(char_id), "")
+
 
 def _set_last_cache_etag(char_id, etag):
     return cache.set(_build_char_cache_etag_id(char_id), etag)
 
+
 def _build_char_cache_id(char_id):
     return f"ct-pingger-char-{char_id}"
+
 
 def _get_last_cache_expire(char_id):
     return cache.get(_build_char_cache_id(char_id), 0)
 
+
 def _set_last_cache_expire(char_id, expires):
     return cache.set(_build_char_cache_id(char_id), expires)
 
+
 def _build_corp_cache_id(corp_id):
     return f"ct-pingger-corp-{corp_id}"
+
 
 def _get_cache_data_for_corp(corp_id):
     cached_data = cache.get(_build_corp_cache_id(corp_id), False)
@@ -94,13 +103,15 @@ def _get_cache_data_for_corp(corp_id):
     else:
         return (0, [], -661)
 
+
 def _set_cache_data_for_corp(corp_id, last_char, char_array, next_update):
     data = {
         "last_char": last_char,
         "char_array": char_array,
         "next_update": time.mktime(timezone.now().timetuple()) + next_update
     }
-    cache.set(_build_corp_cache_id(corp_id), json.dumps(data), CACHE_TIME_SECONDS + 60)
+    cache.set(_build_corp_cache_id(corp_id),
+              json.dumps(data), CACHE_TIME_SECONDS + 60)
 
 
 @shared_task
@@ -114,12 +125,12 @@ def bootstrap_notification_tasks():
     all_member_corps_in_audit = CharacterAudit.objects.filter(character__character_ownership__user__profile__state__name__in=["Member"],
                                                               characterroles__station_manager=True,
                                                               active=True)
-    
-    #TODO add app.model setting to filter for who to ping for.
+
+    # TODO add app.model setting to filter for who to ping for.
     filters = []
     if len(allis) > 0:
         filters.append(Q(character__alliance_id__in=allis))
-    
+
     if len(corps) > 0:
         filters.append(Q(character__corporation_id__in=corps))
 
@@ -129,36 +140,42 @@ def bootstrap_notification_tasks():
             query |= q
         all_member_corps_in_audit = all_member_corps_in_audit.filter(query)
 
-    corps = list(set(all_member_corps_in_audit.values_list("character__corporation_id", flat=True)))
+    corps = list(set(all_member_corps_in_audit.values_list(
+        "character__corporation_id", flat=True)))
 
     # fire off tasks for each corp with active models
     for cid in corps:
         last_char, char_array, next_update = _get_cache_data_for_corp(cid)
         if next_update < -60:  # 1 min since last update should have fired.
             logger.warning(f"PINGER: {cid} Out of Sync, Starting back up!")
-            corporation_notification_update.apply_async(args=[cid], priority=TASK_PRIO+1)
+            corporation_notification_update.apply_async(
+                args=[cid], priority=TASK_PRIO+1)
 
 
 @shared_task()
 def queue_corporation_notification_update(corporation_id, wait_time):
-    corporation_notification_update.apply_async(args=[corporation_id], priority=(TASK_PRIO+1), countdown=wait_time)
+    corporation_notification_update.apply_async(
+        args=[corporation_id], priority=(TASK_PRIO+1), countdown=wait_time)
+
 
 @shared_task(bind=True, base=QueueOnce, max_retries=None)
 def corporation_notification_update(self, corporation_id):
     # get oldest token and update notifications chained with a notification check
     data = _get_cache_data_for_corp(corporation_id)
-    
+
     if data:
         last_character = data[0]
 
-        logger.info(f"PINGER: {corporation_id} Last Update was with {last_character}")
+        logger.info(
+            f"PINGER: {corporation_id} Last Update was with {last_character}")
 
         all_chars_in_corp = list(set(CharacterAudit.objects.filter((Q(characterroles__station_manager=True) | Q(characterroles__personnel_manager=True)),
-                                                          character__corporation_id=corporation_id,
-                                                          active=True).values_list("character__character_id", flat=True)))
-        
+                                                                   character__corporation_id=corporation_id,
+                                                                   active=True).values_list("character__character_id", flat=True)))
+
         all_chars_in_corp.sort()
-        logger.info(f"PINGER: {corporation_id} We have these Characters {all_chars_in_corp}")
+        logger.info(
+            f"PINGER: {corporation_id} We have these Characters {all_chars_in_corp}")
 
         if last_character in all_chars_in_corp:
             idx = all_chars_in_corp.index(last_character) + 1
@@ -172,7 +189,7 @@ def corporation_notification_update(self, corporation_id):
         logger.info(f"PINGER: {corporation_id} Updating with {character_id}")
 
         # if the char bugs out we will retry. so use next toon.
-        #TODO Blacklist bad chars
+        # TODO Blacklist bad chars
         req_scopes = ['esi-characters.read_notifications.v1']
 
         token = Token.get_token(character_id, req_scopes)
@@ -184,14 +201,16 @@ def corporation_notification_update(self, corporation_id):
         try:
             access_token = token.valid_access_token()
         except InvalidGrantError:
-            logger.error(f"Invalid Grant on {token}, Deleting {token.character_name}'s token")
+            logger.error(
+                f"Invalid Grant on {token}, Deleting {token.character_name}'s token")
             self.retry(countdown=10)
 
         last_expire = _get_last_cache_expire(character_id)
-        _set_cache_data_for_corp(corporation_id, character_id, all_chars_in_corp, 10)
+        _set_cache_data_for_corp(
+            corporation_id, character_id, all_chars_in_corp, 10)
 
         types = notifications.get_available_types()
-        #update notifications for this character inline.
+        # update notifications for this character inline.
 
         notifs = esi.client.Character.get_characters_character_id_notifications(character_id=character_id,
                                                                                 token=access_token)
@@ -200,23 +219,27 @@ def corporation_notification_update(self, corporation_id):
 
         now = time.mktime(timezone.now().timetuple())
         next_expire = http2time(response.headers.get('Expires'))
-            
+
         secs_till_expire = next_expire - now
 
         if next_expire == last_expire:
             logger.info(f"PINGER: CACHE: Same Cache as last update.")
         if secs_till_expire < 30:
-            logger.warning(f"PINGER: CACHE: Almost expired cache {token.character_name}, retrying with this character in {secs_till_expire + 1} seconds")
-            _set_cache_data_for_corp(corporation_id, last_character, all_chars_in_corp, 0)
+            logger.warning(
+                f"PINGER: CACHE: Almost expired cache {token.character_name}, retrying with this character in {secs_till_expire + 1} seconds")
+            _set_cache_data_for_corp(
+                corporation_id, last_character, all_chars_in_corp, 0)
             self.retry(countdown=secs_till_expire+1)
         elif secs_till_expire < 570:
-            logger.warning(f"PINGER: CACHE: Mid cache cycle {token.character_name}, retrying with next character")
+            logger.warning(
+                f"PINGER: CACHE: Mid cache cycle {token.character_name}, retrying with next character")
             self.retry(countdown=1)
-            
+
         _set_last_cache_expire(character_id, next_expire)
 
         pingable_notifs = []
-        pinged_already = set(list(Ping.objects.values_list("notification_id", flat=True)))
+        pinged_already = set(
+            list(Ping.objects.values_list("notification_id", flat=True)))
         cuttoff = timezone.now() - datetime.timedelta(hours=1)
 
         for n in notifs:
@@ -225,22 +248,26 @@ def corporation_notification_update(self, corporation_id):
                     if n.get('notification_id') not in pinged_already:
                         pingable_notifs.append(n)
 
-        logger.info(f"PINGER: {corporation_id} Pings to process: {len(pingable_notifs)}")
+        logger.info(
+            f"PINGER: {corporation_id} Pings to process: {len(pingable_notifs)}")
 
         # did we get any?
-        process_notifications.apply_async(priority=TASK_PRIO, args=[character_id, pingable_notifs])
-
+        process_notifications.apply_async(priority=TASK_PRIO, args=[
+                                          character_id, pingable_notifs])
 
         _, _, min_delay = get_settings()
 
         delay = max(CACHE_TIME_SECONDS / len(all_chars_in_corp), min_delay)
 
         # leverage cache
-        _set_cache_data_for_corp(corporation_id, character_id, all_chars_in_corp, delay)
+        _set_cache_data_for_corp(
+            corporation_id, character_id, all_chars_in_corp, delay)
         # schedule the next corp token depending on the amount available ( 10 min / characters we have ) for each corp
-        logger.info(f"PINGER: {corporation_id} We have {len(all_chars_in_corp)} Characters, will update every {delay} seconds.")
+        logger.info(
+            f"PINGER: {corporation_id} We have {len(all_chars_in_corp)} Characters, will update every {delay} seconds.")
         # cant requeue ourself in a queueonce enviro
-        queue_corporation_notification_update.apply_async(args=[corporation_id, delay], priority=(TASK_PRIO+1), countdown=1)
+        queue_corporation_notification_update.apply_async(
+            args=[corporation_id, delay], priority=(TASK_PRIO+1), countdown=1)
 
 
 @shared_task(bind=True, base=QueueOnce)
@@ -250,25 +277,28 @@ def process_notifications(self, cid, notifs):
     new_notifs = []
 
     for note in notifs:
-        note['timestamp'] = datetime.datetime.fromisoformat(note.get('timestamp').replace("Z", "+00:00") )
+        note['timestamp'] = datetime.datetime.fromisoformat(
+            note.get('timestamp').replace("Z", "+00:00"))
         if note.get('timestamp') > cuttoff:
-            logger.info(f"PINGER: {char} Got Notification {note.get('notification_id')} {note.get('type')} {note.get('timestamp')}")
+            logger.info(
+                f"PINGER: {char} Got Notification {note.get('notification_id')} {note.get('type')} {note.get('timestamp')}")
 
             n = Notification(character=char,
-                                notification_id=note.get(
-                                    'notification_id'),
-                                sender_id=note.get('sender_id'),
-                                sender_type=note.get('sender_type'),
-                                notification_text=note.get('text'),
-                                timestamp=note.get('timestamp'),
-                                notification_type=note.get('type'),
-                                is_read=note.get('is_read'))
+                             notification_id=note.get(
+                                 'notification_id'),
+                             sender_id=note.get('sender_id'),
+                             sender_type=note.get('sender_type'),
+                             notification_text=note.get('text'),
+                             timestamp=note.get('timestamp'),
+                             notification_type=note.get('type'),
+                             is_read=note.get('is_read'))
             new_notifs.append(n)
 
     pings = {}
     # grab all notifications within scope.
     types = notifications.get_available_types()
-    pinged_already = set(list(Ping.objects.filter(time__gte=cuttoff).values_list("notification_id", flat=True)))
+    pinged_already = set(list(Ping.objects.filter(
+        time__gte=cuttoff).values_list("notification_id", flat=True)))
     # parse them into the parsers
     for n in new_notifs:
         if n.notification_id not in pinged_already:
@@ -285,11 +315,12 @@ def process_notifications(self, cid, notifs):
     for k, l in pings.items():
         webhooks = DiscordWebhook.objects.filter(ping_types__class_tag=k)\
             .prefetch_related("alliance_filter", "corporation_filter", "region_filter")
-        
+
         for hook in webhooks:
             regions = hook.region_filter.all().values_list("region_id", flat=True)
             alliances = hook.alliance_filter.all().values_list("alliance_id", flat=True)
-            corporations = hook.corporation_filter.all().values_list("corporation_id", flat=True)
+            corporations = hook.corporation_filter.all(
+            ).values_list("corporation_id", flat=True)
 
             for p in l:
                 corp_filter, alli_filter, region_filter = p.get_filters()
@@ -306,15 +337,16 @@ def process_notifications(self, cid, notifs):
 
                 if region_filter is not None and len(regions) > 0:
                     if region_filter not in regions:
-                        logging.info(f"PINGER: ignroing Ping {p} region filter")
+                        logging.info(
+                            f"PINGER: ignroing Ping {p} region filter")
                         continue
 
                 ping_ob = Ping.objects.create(
                     notification_id=p._notification.notification_id,
-                    time = p._notification.timestamp,
-                    body = p._ping,
-                    hook = hook,
-                    alerting = p.force_at_ping
+                    time=p._notification.timestamp,
+                    body=p._ping,
+                    hook=hook,
+                    alerting=p.force_at_ping
                 )
                 logging.info(f"PINGER: Sending Ping {ping_ob}")
                 ping_ob.send_ping()
@@ -346,7 +378,8 @@ def _get_cooloff_time(wh_id):
 @shared_task(bind=True, max_retries=None)
 def send_ping(self, ping_id):
     ping_ob = Ping.objects.get(id=ping_id)
-    saved = get_redis_connection("default").sadd("ct-pinger-ping-lock-set", f"{ping_id}{ping_ob.notification_id}")
+    saved = get_redis_connection("default").sadd(
+        "ct-pinger-ping-lock-set", f"{ping_id}{ping_ob.notification_id}")
     if saved == 0:
         logger.info(f"PINGER: DUPLICATE skipping {ping_ob.notification_id}")
         ping_ob.ping_sent = True
@@ -355,7 +388,8 @@ def send_ping(self, ping_id):
 
     wh_sleep = _get_cooloff_time(ping_ob.hook.id)
     if wh_sleep > 0:
-        logger.warning(f"Webhook rate limited: trying again in {wh_sleep} seconds...")
+        logger.warning(
+            f"Webhook rate limited: trying again in {wh_sleep} seconds...")
         self.retry(countdown=wh_sleep)
 
     if ping_ob.ping_sent == True:
@@ -379,19 +413,23 @@ def send_ping(self, ping_id):
                              data=payload,
                              params={'wait': True})
 
-    if response.status_code in [200,204]:
+    if response.status_code in [200, 204]:
         logger.debug(f"{ping_ob.notification_id} Ping Sent!")
         ping_ob.ping_sent = True
         ping_ob.save()
     elif response.status_code == 429:
-        saved = get_redis_connection("default").srem("ct-pinger-ping-lock-set", f"{ping_id}{ping_ob.notification_id}")
+        saved = get_redis_connection("default").srem(
+            "ct-pinger-ping-lock-set", f"{ping_id}{ping_ob.notification_id}")
         errors = json.loads(response.content.decode('utf-8'))
         wh_sleep = (int(errors['retry_after']) / 1000) + 0.15
-        logger.warning(f"Webhook rate limited: trying again in {wh_sleep} seconds...")
+        logger.warning(
+            f"Webhook rate limited: trying again in {wh_sleep} seconds...")
         _set_wh_cooloff(ping_ob.hook.id, wh_sleep)
         self.retry(countdown=wh_sleep)
     else:
-        saved = get_redis_connection("default").srem("ct-pinger-ping-lock-set", f"{ping_id}{ping_ob.notification_id}")
-        logger.error(f"{ping_ob.notification_id} failed ({response.status_code}) to: {url}")
+        saved = get_redis_connection("default").srem(
+            "ct-pinger-ping-lock-set", f"{ping_id}{ping_ob.notification_id}")
+        logger.error(
+            f"{ping_ob.notification_id} failed ({response.status_code}) to: {url}")
         response.raise_for_status()
     # TODO 404/403/500 etc etc etc etc

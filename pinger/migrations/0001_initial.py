@@ -16,14 +16,16 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='DiscordWebhook',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(auto_created=True,
+                 primary_key=True, serialize=False, verbose_name='ID')),
                 ('discord_webhook', models.TextField()),
             ],
         ),
         migrations.CreateModel(
             name='Ping',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(auto_created=True,
+                 primary_key=True, serialize=False, verbose_name='ID')),
                 ('notification_id', models.BigIntegerField()),
                 ('title', models.TextField()),
                 ('body', models.TextField()),
@@ -33,28 +35,33 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='PingType',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(auto_created=True,
+                 primary_key=True, serialize=False, verbose_name='ID')),
                 ('name', models.CharField(max_length=100)),
                 ('class_tag', models.CharField(max_length=100)),
             ],
         ),
         migrations.AddIndex(
             model_name='ping',
-            index=models.Index(fields=['notification_id'], name='pinger_ping_notific_180627_idx'),
+            index=models.Index(
+                fields=['notification_id'], name='pinger_ping_notific_180627_idx'),
         ),
         migrations.AddIndex(
             model_name='ping',
-            index=models.Index(fields=['time'], name='pinger_ping_time_9ef89b_idx'),
+            index=models.Index(
+                fields=['time'], name='pinger_ping_time_9ef89b_idx'),
         ),
         migrations.AddField(
             model_name='discordwebhook',
             name='alliance_filter',
-            field=models.ManyToManyField(related_name='alli_filters', to='eveonline.EveAllianceInfo'),
+            field=models.ManyToManyField(
+                related_name='alli_filters', to='eveonline.EveAllianceInfo'),
         ),
         migrations.AddField(
             model_name='discordwebhook',
             name='corporation_filter',
-            field=models.ManyToManyField(related_name='corp_filters', to='eveonline.EveCorporationInfo'),
+            field=models.ManyToManyField(
+                related_name='corp_filters', to='eveonline.EveCorporationInfo'),
         ),
         migrations.AddField(
             model_name='discordwebhook',
@@ -64,6 +71,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='discordwebhook',
             name='region_filter',
-            field=models.ManyToManyField(related_name='region_filters', to='corptools.MapRegion'),
+            field=models.ManyToManyField(
+                related_name='region_filters', to='corptools.MapRegion'),
         ),
     ]

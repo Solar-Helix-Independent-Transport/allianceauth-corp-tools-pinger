@@ -6,9 +6,9 @@ from django.db import migrations
 def add_ping_types(apps, schema_editor):
     PingType = apps.get_model('pinger', 'PingType')
 
-    #StructureUnderAttack
+    # StructureUnderAttack
     PingType.objects.create(name="Starbase: Starbase Under Attack",
-        class_tag="TowerAlertMsg")
+                            class_tag="TowerAlertMsg")
 
 
 class Migration(migrations.Migration):

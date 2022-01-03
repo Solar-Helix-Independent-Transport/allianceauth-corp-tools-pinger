@@ -2,11 +2,13 @@
 
 from django.db import migrations
 
+
 def add_settings(apps, schema_editor):
     PingerConfig = apps.get_model('pinger', 'PingerConfig')
 
-    #StructureLostShields
+    # StructureLostShields
     PingerConfig.objects.create()
+
 
 class Migration(migrations.Migration):
 

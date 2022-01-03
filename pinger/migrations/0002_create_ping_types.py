@@ -6,21 +6,21 @@ from django.db import migrations
 def add_ping_types(apps, schema_editor):
     PingType = apps.get_model('pinger', 'PingType')
 
-    #AllAnchoringMsg
+    # AllAnchoringMsg
     PingType.objects.create(name="SOV: Tower Anchoring",
-        class_tag="AllAnchoringMsg")
-    #MoonminingExtractionFinished
+                            class_tag="AllAnchoringMsg")
+    # MoonminingExtractionFinished
     PingType.objects.create(name="Moons: Extraction Complete",
-        class_tag="MoonminingExtractionFinished")
-    #MoonminingAutomaticFracture
+                            class_tag="MoonminingExtractionFinished")
+    # MoonminingAutomaticFracture
     PingType.objects.create(name="Moons: Extraction Automatic Fracture",
-        class_tag="MoonminingAutomaticFracture")
-    #MoonminingLaserFired
+                            class_tag="MoonminingAutomaticFracture")
+    # MoonminingLaserFired
     PingType.objects.create(name="Moons: Extraction Laser Fired",
-        class_tag="MoonminingLaserFired")
-    #MoonminingExtractionStarted
+                            class_tag="MoonminingLaserFired")
+    # MoonminingExtractionStarted
     PingType.objects.create(name="Moons: Extraction Started",
-        class_tag="MoonminingExtractionStarted")
+                            class_tag="MoonminingExtractionStarted")
 
 
 class Migration(migrations.Migration):

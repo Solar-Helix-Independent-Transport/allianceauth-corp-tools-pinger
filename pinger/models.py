@@ -16,23 +16,23 @@ class PingType(models.Model):
 
 
 class DiscordWebhook(models.Model):
-    nickname = models.TextField(default = "Discord Webhook")
+    nickname = models.TextField(default="Discord Webhook")
     discord_webhook = models.TextField()
 
     corporation_filter = models.ManyToManyField(EveCorporationInfo,
-        related_name="corp_filters",
-        blank=True)
+                                                related_name="corp_filters",
+                                                blank=True)
 
     alliance_filter = models.ManyToManyField(EveAllianceInfo,
-        related_name="alli_filters",
-        blank=True)
+                                             related_name="alli_filters",
+                                             blank=True)
 
     region_filter = models.ManyToManyField(MapRegion,
-        related_name="region_filters",
-        blank=True)
+                                           related_name="region_filters",
+                                           blank=True)
 
     ping_types = models.ManyToManyField(PingType,
-        blank=True)
+                                        blank=True)
 
 
 class Ping(models.Model):
@@ -51,15 +51,15 @@ class Ping(models.Model):
             models.Index(fields=['notification_id']),
             models.Index(fields=['time']),
         )
-    
+
     def send_ping(self):
         from . import tasks
         tasks.send_ping.apply_async(
             priority=2,
             args=[
-                    self.id
-                ]
-            )
+                self.id
+            ]
+        )
 
 
 class PingerConfig(models.Model):
@@ -67,7 +67,7 @@ class PingerConfig(models.Model):
     AllianceLimiter = models.ManyToManyField(EveAllianceInfo, blank=True,
                                              help_text='Alliances to put into the queue')
     CorporationLimiter = models.ManyToManyField(EveCorporationInfo, blank=True,
-                                             help_text='Corporations to put into the queue')
+                                                help_text='Corporations to put into the queue')
 
     min_time_between_updates = models.IntegerField(default=60,
                                                    help_text='Minimmum time between tasks for corp.')
@@ -75,8 +75,9 @@ class PingerConfig(models.Model):
     def save(self, *args, **kwargs):
         if not self.pk and PingerConfig.objects.exists():
             # Force a single object
-            raise ValidationError('Only one Settings Model can there be at a time! No Sith Lords there are here!')
-        self.pk = self.id = 1 # If this happens to be deleted and recreated, force it to be 1
+            raise ValidationError(
+                'Only one Settings Model can there be at a time! No Sith Lords there are here!')
+        self.pk = self.id = 1  # If this happens to be deleted and recreated, force it to be 1
         return super().save(*args, **kwargs)
 
 

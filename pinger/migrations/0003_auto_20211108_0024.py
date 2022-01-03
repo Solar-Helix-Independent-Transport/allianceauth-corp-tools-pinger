@@ -30,7 +30,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='ping',
             name='hook',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='pinger.discordwebhook'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to='pinger.discordwebhook'),
             preserve_default=False,
         ),
         migrations.AddField(
@@ -41,12 +42,14 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='discordwebhook',
             name='alliance_filter',
-            field=models.ManyToManyField(blank=True, related_name='alli_filters', to='eveonline.EveAllianceInfo'),
+            field=models.ManyToManyField(
+                blank=True, related_name='alli_filters', to='eveonline.EveAllianceInfo'),
         ),
         migrations.AlterField(
             model_name='discordwebhook',
             name='corporation_filter',
-            field=models.ManyToManyField(blank=True, related_name='corp_filters', to='eveonline.EveCorporationInfo'),
+            field=models.ManyToManyField(
+                blank=True, related_name='corp_filters', to='eveonline.EveCorporationInfo'),
         ),
         migrations.AlterField(
             model_name='discordwebhook',
@@ -56,6 +59,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='discordwebhook',
             name='region_filter',
-            field=models.ManyToManyField(blank=True, related_name='region_filters', to='corptools.MapRegion'),
+            field=models.ManyToManyField(
+                blank=True, related_name='region_filters', to='corptools.MapRegion'),
         ),
     ]
