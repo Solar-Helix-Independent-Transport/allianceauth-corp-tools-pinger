@@ -17,7 +17,7 @@ def add_ping_types(apps, schema_editor):
                             class_tag="CorpAppRejectMsg")
 
     PingType.objects.create(name="Structure: Structure Destroyed",
-                            class_tag="CorpAppAcceptMsg")
+                            class_tag="StructureDestroyed")
     PingType.objects.create(name="Structure: Structure Unanchoring",
                             class_tag="StructureUnanchoring")
     PingType.objects.create(name="Structure: Structure Went High Power",
