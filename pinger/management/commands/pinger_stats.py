@@ -21,8 +21,9 @@ class Command(BaseCommand):
         self.stdout.write("Looking for Valid Corps:")
 
         # get all new corps not in cache
-        all_member_corps_in_audit = CharacterAudit.objects.filter(character__character_ownership__user__profile__state__name__in=["Member"],
-                                                                  characterroles__station_manager=True,
+        all_member_corps_in_audit = CharacterAudit.objects.filter((Q(characterroles__station_manager=True) | Q(characterroles__personnel_manager=True)),
+                                                                  character__character_ownership__user__profile__state__name__in=[
+                                                                      "Member"],
                                                                   active=True)
 
         filters = []

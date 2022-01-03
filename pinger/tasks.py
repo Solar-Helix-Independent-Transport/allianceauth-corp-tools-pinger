@@ -169,10 +169,26 @@ def corporation_notification_update(self, corporation_id):
         logger.info(
             f"PINGER: {corporation_id} Last Update was with {last_character}")
 
-        all_chars_in_corp = list(set(CharacterAudit.objects.filter((Q(characterroles__station_manager=True) | Q(characterroles__personnel_manager=True)),
-                                                                   character__corporation_id=corporation_id,
-                                                                   active=True).values_list("character__character_id", flat=True)))
+        all_chars_in_corp = set(CharacterAudit.objects.filter(characterroles__station_manager=True,
+                                                              character__corporation_id=corporation_id,
+                                                              active=True).values_list("character__character_id", flat=True))
 
+        all_hr_chars = list(set(CharacterAudit.objects.filter(characterroles__personnel_manager=True,
+                                                              character__corporation_id=corporation_id,
+                                                              active=True).values_list("character__character_id", flat=True)))
+
+        # todo make this nicer...
+        if len(all_hr_chars) > 0:
+            hr_presented = False
+            for i in all_hr_chars:
+                if i in all_chars_in_corp:
+                    hr_presented = True
+                    break
+
+            if not hr_presented:
+                all_chars_in_corp.add(all_hr_chars[0])
+
+        all_chars_in_corp = list(all_chars_in_corp)
         all_chars_in_corp.sort()
         logger.info(
             f"PINGER: {corporation_id} We have these Characters {all_chars_in_corp}")
