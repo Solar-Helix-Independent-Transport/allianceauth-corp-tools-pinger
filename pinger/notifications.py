@@ -1519,7 +1519,7 @@ class CorpAppAcceptMsg(NotificationPing):
         footer = {"icon_url": "https://imageserver.eveonline.com/Corporation/%s_64.png" % (str(corp_id)),
                   "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
 
-        fields = [{'name': 'Character', 'value': f"*[{app_char}](https://zkillboard.com/search/{app_char}/)*", 'inline': True},
+        fields = [{'name': 'Character', 'value': f"[{app_char}](https://zkillboard.com/search/{app_char}/)", 'inline': True},
                   {'name': 'Corporation', 'value': corp_name, 'inline': True}]
 
         self.package_ping(title,
@@ -1561,7 +1561,7 @@ class CorpAppInvitedMsg(NotificationPing):
         footer = {"icon_url": "https://imageserver.eveonline.com/Corporation/%s_64.png" % (str(corp_id)),
                   "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
 
-        fields = [{'name': 'Character', 'value': f"*[{app_char}](https://zkillboard.com/search/{app_char}/)*", 'inline': True},
+        fields = [{'name': 'Character', 'value': f"[{app_char}](https://zkillboard.com/search/{app_char}/)", 'inline': True},
                   {'name': 'Invoking Character',
                       'value': invoked_by.name, 'inline': True},
                   {'name': 'Corporation', 'value': corp_name, 'inline': True}, ]
@@ -1602,7 +1602,7 @@ class CorpAppNewMsg(NotificationPing):
         footer = {"icon_url": "https://imageserver.eveonline.com/Corporation/%s_64.png" % (str(corp_id)),
                   "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
 
-        fields = [{'name': 'Character', 'value': f"*[{app_char}](https://zkillboard.com/search/{app_char}/)*", 'inline': True},
+        fields = [{'name': 'Character', 'value': f"[{app_char}](https://zkillboard.com/search/{app_char}/)", 'inline': True},
                   {'name': 'Corporation', 'value': corp_name, 'inline': True}]
 
         self.package_ping(title,
@@ -1641,7 +1641,7 @@ class CorpAppRejectMsg(NotificationPing):
         footer = {"icon_url": "https://imageserver.eveonline.com/Corporation/%s_64.png" % (str(corp_id)),
                   "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
 
-        fields = [{'name': 'Character', 'value': f"*[{app_char}](https://zkillboard.com/search/{app_char}/)*", 'inline': True},
+        fields = [{'name': 'Character', 'value': f"[{app_char}](https://zkillboard.com/search/{app_char}/)", 'inline': True},
                   {'name': 'Corporation', 'value': corp_name, 'inline': True}]
 
         self.package_ping(title,
