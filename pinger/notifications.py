@@ -10,7 +10,6 @@ from corptools.task_helpers.update_tasks import fetch_location_name
 from .models import MutedStructure
 
 from django.utils.html import strip_tags
-
 import logging
 logger = logging.getLogger(__name__)
 
@@ -1509,7 +1508,7 @@ class CorpAppAcceptMsg(NotificationPing):
         app_char, _ = ctm.EveName.objects.get_or_create_from_esi(
             self._data['charID'])
 
-        body = f"```{self._data['applicationText']}```\n"
+        body = f"```{strip_tags(self._data['applicationText'])}```\n"
 
         corp_id = self._notification.character.character.corporation_id
         corp_ticker = self._notification.character.character.corporation_ticker
@@ -1551,7 +1550,7 @@ class CorpAppInvitedMsg(NotificationPing):
         invoked_by, _ = ctm.EveName.objects.get_or_create_from_esi(
             self._data['invokingCharID'])
 
-        body = f"```{self._data['applicationText']}```\n"
+        body = f"```{strip_tags(self._data['applicationText'])}```\n"
 
         corp_id = self._notification.character.character.corporation_id
         corp_ticker = self._notification.character.character.corporation_ticker
@@ -1592,7 +1591,7 @@ class CorpAppNewMsg(NotificationPing):
         app_char, _ = ctm.EveName.objects.get_or_create_from_esi(
             self._data['charID'])
 
-        body = f"```{self._data['applicationText']}```\n"
+        body = f"```{strip_tags(self._data['applicationText'])}```\n"
 
         corp_id = self._notification.character.character.corporation_id
         corp_ticker = self._notification.character.character.corporation_ticker
@@ -1631,7 +1630,7 @@ class CorpAppRejectMsg(NotificationPing):
         app_char, _ = ctm.EveName.objects.get_or_create_from_esi(
             self._data['charID'])
 
-        body = f"```{self._data['applicationText']}```\n"
+        body = f"```{strip_tags(self._data['applicationText'])}```\n"
 
         corp_id = self._notification.character.character.corporation_id
         corp_ticker = self._notification.character.character.corporation_ticker
