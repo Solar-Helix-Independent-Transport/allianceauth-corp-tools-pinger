@@ -184,7 +184,7 @@ class AllAnchoringMsg(NotificationPing):
 
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
-        self._region = system_db.constellation.region.name
+        self._region = system_db.constellation.region.region_id
 
 
 class MoonminingExtractionFinished(NotificationPing):
@@ -267,7 +267,7 @@ class MoonminingExtractionFinished(NotificationPing):
 
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
-        self._region = system_db.constellation.region.name
+        self._region = system_db.constellation.region.region_id
 
 
 class MoonminingAutomaticFracture(NotificationPing):
@@ -346,7 +346,7 @@ class MoonminingAutomaticFracture(NotificationPing):
 
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
-        self._region = system_db.constellation.region.name
+        self._region = system_db.constellation.region.region_id
 
 
 class MoonminingLaserFired(NotificationPing):
@@ -429,7 +429,7 @@ class MoonminingLaserFired(NotificationPing):
 
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
-        self._region = system_db.constellation.region.name
+        self._region = system_db.constellation.region.region_id
 
 
 class MoonminingExtractionStarted(NotificationPing):
@@ -521,7 +521,7 @@ class MoonminingExtractionStarted(NotificationPing):
 
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
-        self._region = system_db.constellation.region.name
+        self._region = system_db.constellation.region.region_id
 
 
 class StructureLostShields(NotificationPing):
@@ -595,7 +595,7 @@ class StructureLostShields(NotificationPing):
 
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
-        self._region = system_db.constellation.region.name
+        self._region = system_db.constellation.region.region_id
 
 
 class StructureLostArmor(NotificationPing):
@@ -669,7 +669,7 @@ class StructureLostArmor(NotificationPing):
 
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
-        self._region = system_db.constellation.region.name
+        self._region = system_db.constellation.region.region_id
 
 
 class StructureUnderAttack(NotificationPing):
@@ -778,7 +778,7 @@ class StructureUnderAttack(NotificationPing):
 
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
-        self._region = system_db.constellation.region.name
+        self._region = system_db.constellation.region.region_id
         self.force_at_ping = True
 
 
@@ -838,7 +838,7 @@ class SovStructureReinforced(NotificationPing):
 
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
-        self._region = system_db.constellation.region.name
+        self._region = system_db.constellation.region.region_id
 
 
 class EntosisCaptureStarted(NotificationPing):
@@ -887,7 +887,8 @@ class EntosisCaptureStarted(NotificationPing):
                           colour=15158332)
 
         self._corp = self._notification.character.character.corporation_id
-        self._region = system_db.constellation.region.name
+        self._alli = self._notification.character.character.alliance_id
+        self._region = system_db.constellation.region.region_id
         self.force_at_ping = True
 
 
@@ -955,7 +956,7 @@ class OwnershipTransferred(NotificationPing):
 
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
-        self._region = system_db.constellation.region.name
+        self._region = system_db.constellation.region.region_id
 
 
 class TowerAlertMsg(NotificationPing):
@@ -1038,7 +1039,7 @@ class TowerAlertMsg(NotificationPing):
 
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
-        self._region = system_db.constellation.region.name
+        self._region = system_db.constellation.region.region_id
         self.force_at_ping = True
 
 
@@ -1100,15 +1101,10 @@ class StructureAnchoring(NotificationPing):
         footer = {"icon_url": "https://imageserver.eveonline.com/Corporation/%s_64.png" % (str(corp_id)),
                   "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
 
-        date_out = time_till_to_dt(
-            self._data['timeLeft'], self._notification.timestamp)
-        time_till = time_till_to_string(self._data['timeLeft'])
         fields = [{'name': 'Corporation', 'value': corp_name, 'inline': True},
                   {'name': 'System', 'value': system_name, 'inline': True},
                   {'name': 'Region', 'value': region_name, 'inline': True},
-                  {'name': 'Type', 'value': structure_type.name, 'inline': True},
-                  {'name': 'Time Till Out', 'value': time_till, 'inline': False},
-                  {'name': 'Date Out', 'value': date_out.strftime("%Y-%m-%d %H:%M"), 'inline': False}]
+                  {'name': 'Type', 'value': structure_type.name, 'inline': True}]
         self.package_ping(title,
                           body,
                           self._notification.timestamp,
@@ -1118,7 +1114,7 @@ class StructureAnchoring(NotificationPing):
 
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
-        self._region = system_db.constellation.region.name
+        self._region = system_db.constellation.region.region_id
         self.force_at_ping = False
 
 
@@ -1188,7 +1184,7 @@ class StructureWentLowPower(NotificationPing):
 
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
-        self._region = system_db.constellation.region.name
+        self._region = system_db.constellation.region.region_id
         self.force_at_ping = False
 
 
@@ -1258,7 +1254,7 @@ class StructureWentHighPower(NotificationPing):
 
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
-        self._region = system_db.constellation.region.name
+        self._region = system_db.constellation.region.region_id
         self.force_at_ping = False
 
 
@@ -1337,7 +1333,7 @@ class StructureUnanchoring(NotificationPing):
 
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
-        self._region = system_db.constellation.region.name
+        self._region = system_db.constellation.region.region_id
         self.force_at_ping = False
 
 
@@ -1413,7 +1409,7 @@ class StructureDestroyed(NotificationPing):
 
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
-        self._region = system_db.constellation.region.name
+        self._region = system_db.constellation.region.region_id
         self.force_at_ping = False
 
 
