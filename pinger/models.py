@@ -72,6 +72,9 @@ class PingerConfig(models.Model):
     min_time_between_updates = models.IntegerField(default=60,
                                                    help_text='Minimmum time between tasks for corp.')
 
+    discord_mute_channels = models.TextField(
+        default="", blank=True, help_text='Comma Separated list of channel_ids the mute command can be used in.')
+
     def save(self, *args, **kwargs):
         if not self.pk and PingerConfig.objects.exists():
             # Force a single object

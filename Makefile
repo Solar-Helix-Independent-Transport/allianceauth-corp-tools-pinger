@@ -9,10 +9,23 @@ help:
 
 clean:
 	rm -rf dist/*
+	rm -rf
 
 dev:
+	pip install --upgrade pip
+	pip install wheel
+	pip install tox
 	pip install -e .
+
+test:
+	tox
+
+deploy:
 	pip install twine
+	echo "[pypi]" > ~/.pypirc
+	echo "username=__token__" >> ~/.pypirc
+	echo "password=${pypi-api-token}" >> ~/.pypirc
+	cut -c-20 ~/.pypirc
 
 package:
 	python setup.py sdist

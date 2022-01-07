@@ -4,11 +4,14 @@ from django.db import models
 import yaml
 import json
 import datetime
+import time
 
 from corptools import models as ctm
 from corptools.task_helpers.update_tasks import fetch_location_name
 
 from .models import MutedStructure
+
+from django_redis import get_redis_connection
 
 from django.utils.html import strip_tags
 import logging
@@ -670,6 +673,14 @@ class StructureLostArmor(NotificationPing):
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
         self._region = system_db.constellation.region.region_id
+
+        if structure_name != "Unknown":
+            epoch_time = int(time.time())
+            rcon = get_redis_connection()
+            rcon.zadd("ctpingermute", epoch_time, structure_name)
+            rcount = rcon.zcard("ctpingermute")
+            if rcount > 5:
+                rcon.bzpopmin("ctpingermute")
 
 
 class StructureUnderAttack(NotificationPing):

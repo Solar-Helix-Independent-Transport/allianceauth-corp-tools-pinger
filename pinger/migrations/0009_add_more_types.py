@@ -16,15 +16,15 @@ def add_ping_types(apps, schema_editor):
     PingType.objects.create(name="HR: Application Rejected",
                             class_tag="CorpAppRejectMsg")
 
-    PingType.objects.create(name="Structure: Structure Destroyed",
+    PingType.objects.create(name="Structures: Structure Destroyed",
                             class_tag="StructureDestroyed")
-    PingType.objects.create(name="Structure: Structure Unanchoring",
+    PingType.objects.create(name="Structures: Structure Unanchoring",
                             class_tag="StructureUnanchoring")
-    PingType.objects.create(name="Structure: Structure Went High Power",
+    PingType.objects.create(name="Structures: Structure Went High Power",
                             class_tag="StructureWentHighPower")
-    PingType.objects.create(name="Structure: Structure Went Low Power",
+    PingType.objects.create(name="Structures: Structure Went Low Power",
                             class_tag="StructureWentLowPower")
-    PingType.objects.create(name="Structure: Structure Anchoring",
+    PingType.objects.create(name="Structures: Structure Anchoring",
                             class_tag="StructureAnchoring")
 
 
