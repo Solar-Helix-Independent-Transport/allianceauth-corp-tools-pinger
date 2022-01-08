@@ -1004,9 +1004,9 @@ class TowerAlertMsg(NotificationPing):
             self._data['typeID'])
 
         title = "Starbase Under Attack!"
-        shld = float(self._data['shieldValue'])
-        armr = float(self._data['armorValue'])
-        hull = float(self._data['hullValue'])
+        shld = float(self._data['shieldValue']*100)
+        armr = float(self._data['armorValue']*100)
+        hull = float(self._data['hullValue']*100)
         body = "Structure under Attack!\n[ S: {0:.2f}% A: {1:.2f}% H: {2:.2f}% ]".format(
             shld, armr, hull)
 
