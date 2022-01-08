@@ -1001,7 +1001,7 @@ class TowerAlertMsg(NotificationPing):
             self._data['moonID'])
 
         structure_type, _ = ctm.EveItemType.objects.get_or_create_from_esi(
-            self._data['structureTypeID'])
+            self._data['typeID'])
 
         title = "Starbase Under Attack!"
         shld = float(self._data['shieldValue'])
