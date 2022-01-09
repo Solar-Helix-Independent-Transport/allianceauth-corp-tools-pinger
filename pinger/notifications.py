@@ -1044,7 +1044,8 @@ class TowerAlertMsg(NotificationPing):
              attacking_alliance_name,
              attacking_alliance_name.replace(" ", "%20"))
 
-        fields = [{'name': 'System', 'value': system_name, 'inline': True},
+        fields = [{'name': 'Moon', 'value': moon.name, 'inline': True},
+                  {'name': 'System', 'value': system_name, 'inline': True},
                   {'name': 'Region', 'value': region_name, 'inline': True},
                   {'name': 'Type', 'value': structure_type.name, 'inline': True},
                   {'name': 'Attacker', 'value': attackerStr, 'inline': False}]
