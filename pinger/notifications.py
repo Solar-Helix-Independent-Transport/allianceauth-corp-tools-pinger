@@ -795,7 +795,7 @@ class StructureUnderAttack(NotificationPing):
         if structure_name != "Unknown":
             epoch_time = int(time.time())
             rcon = get_redis_connection()
-            rcon.zadd("ctpingermute", epoch_time, structure_name)
+            rcon.zadd("ctpingermute", {structure_name: epoch_time})
             rcount = rcon.zcard("ctpingermute")
             if rcount > 5:
                 rcon.bzpopmin("ctpingermute")
