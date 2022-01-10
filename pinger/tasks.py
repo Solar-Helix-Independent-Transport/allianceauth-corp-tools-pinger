@@ -15,7 +15,7 @@ from oauthlib.oauth2.rfc6749.errors import InvalidGrantError
 
 from corptools.task_helpers.char_tasks import update_character_notifications
 from corptools.providers import esi
-from corptools.models import CharacterAudit, Notification
+from corptools.models import CharacterAudit
 
 from django.db.models import Q
 from django.db.models import Max
@@ -291,6 +291,22 @@ def corporation_notification_update(self, corporation_id):
             args=[corporation_id, delay], priority=(TASK_PRIO+1), countdown=1)
 
 
+class Notification:
+    # Settings
+    character = None
+    notification_id = None
+    timestamp = None
+    notification_type = None
+    notification_text = None
+
+    def __init__(self, character, notification_id, timestamp, notification_type, notification_text):
+        self.character = character
+        self.notification_id = notification_id
+        self.timestamp = timestamp
+        self.notification_type = notification_type
+        self.notification_text = notification_text
+
+
 @shared_task(bind=True, base=QueueOnce)
 def process_notifications(self, cid, notifs):
     cuttoff = timezone.now() - datetime.timedelta(hours=1)
@@ -307,12 +323,9 @@ def process_notifications(self, cid, notifs):
             n = Notification(character=char,
                              notification_id=note.get(
                                  'notification_id'),
-                             sender_id=note.get('sender_id'),
-                             sender_type=note.get('sender_type'),
-                             notification_text=note.get('text'),
                              timestamp=note.get('timestamp'),
                              notification_type=note.get('type'),
-                             is_read=note.get('is_read'))
+                             notification_text=note.get('text'))
             new_notifs.append(n)
 
     pings = {}
