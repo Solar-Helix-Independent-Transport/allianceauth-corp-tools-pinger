@@ -9,7 +9,7 @@ with open(os.path.join(os.path.dirname(__file__), 'README.md')) as readme:
 os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setup(
-    name='corptools-pinger',
+    name='allianceauth-corptools-pinger',
     version=__version__,
     packages=find_packages(),
     include_package_data=True,
@@ -18,7 +18,7 @@ setup(
     description='Alliance Auth Plugin',
     long_description=README,
     long_description_content_type="text/markdown",
-    url='',
+    url='https://github.com/Solar-Helix-Independent-Transport/allianceauth-corp-tools-pinger',
     author='AaronKable',
     author_email='aaronkable@gmail.com',
     classifiers=[

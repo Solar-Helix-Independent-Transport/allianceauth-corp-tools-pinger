@@ -188,6 +188,7 @@ class AllAnchoringMsg(NotificationPing):
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
         self._region = system_db.constellation.region.region_id
+        self.force_at_ping = True
 
 
 class MoonminingExtractionFinished(NotificationPing):
