@@ -1,3 +1,4 @@
+import imp
 import time
 import datetime
 import logging
@@ -15,7 +16,7 @@ from oauthlib.oauth2.rfc6749.errors import InvalidGrantError
 
 from corptools.task_helpers.char_tasks import update_character_notifications
 from corptools.providers import esi
-from corptools.models import CharacterAudit
+from corptools.models import CharacterAudit, CorporationAudit
 
 from django.db.models import Q
 from django.db.models import Max
@@ -23,9 +24,10 @@ from pinger.models import DiscordWebhook, Ping, PingerConfig
 
 from http.cookiejar import http2time
 
-from django_redis import get_redis_connection
+from yarl import cache_clear
 
 from . import notifications
+from .providers import cache_client
 
 TZ_STRING = "%Y-%m-%dT%H:%M:%SZ"
 
@@ -151,11 +153,31 @@ def bootstrap_notification_tasks():
             corporation_notification_update.apply_async(
                 args=[cid], priority=TASK_PRIO+1)
 
+    all_corps_in_audit = CorporationAudit.objects.all()
+    for c in all_corps_in_audit:
+        queue_corporation_fuel_update.apply_async(
+            args=[c.corporation.corporation_id], priority=TASK_PRIO+1)
+
+
+FUEL_WAIT_TIME = 60*30  # 30 minutes
+
+
+@shared_task()
+def queue_corporation_fuel_update(corporation_id):
+    corporation_fuel_check.apply_async(
+        args=[corporation_id], priority=(TASK_PRIO+1), countdown=FUEL_WAIT_TIME)
+
 
 @shared_task()
 def queue_corporation_notification_update(corporation_id, wait_time):
     corporation_notification_update.apply_async(
         args=[corporation_id], priority=(TASK_PRIO+1), countdown=wait_time)
+
+
+@shared_task(bind=True, base=QueueOnce, max_retries=None)
+def corporation_fuel_check(self, corporation_id):
+    # get oldest token and update notifications chained with a notification check
+    pass
 
 
 @shared_task(bind=True, base=QueueOnce, max_retries=None)
@@ -412,7 +434,7 @@ def _get_cooloff_time(wh_id):
 @shared_task(bind=True, max_retries=None)
 def send_ping(self, ping_id):
     ping_ob = Ping.objects.get(id=ping_id)
-    saved = get_redis_connection("default").sadd(
+    saved = cache_client.sadd(
         "ct-pinger-ping-lock-set", f"{ping_id}{ping_ob.notification_id}")
     if saved == 0:
         logger.info(f"PINGER: DUPLICATE skipping {ping_ob.notification_id}")
@@ -452,7 +474,7 @@ def send_ping(self, ping_id):
         ping_ob.ping_sent = True
         ping_ob.save()
     elif response.status_code == 429:
-        saved = get_redis_connection("default").srem(
+        saved = cache_client.srem(
             "ct-pinger-ping-lock-set", f"{ping_id}{ping_ob.notification_id}")
         errors = json.loads(response.content.decode('utf-8'))
         wh_sleep = (int(errors['retry_after']) / 1000) + 0.15
@@ -461,7 +483,7 @@ def send_ping(self, ping_id):
         _set_wh_cooloff(ping_ob.hook.id, wh_sleep)
         self.retry(countdown=wh_sleep)
     else:
-        saved = get_redis_connection("default").srem(
+        saved = cache_client.srem(
             "ct-pinger-ping-lock-set", f"{ping_id}{ping_ob.notification_id}")
         logger.error(
             f"{ping_ob.notification_id} failed ({response.status_code}) to: {url}")

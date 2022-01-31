@@ -10,8 +10,7 @@ from corptools import models as ctm
 from corptools.task_helpers.update_tasks import fetch_location_name
 
 from .models import MutedStructure
-
-from django_redis import get_redis_connection
+from .providers import cache_client
 
 from django.utils.html import strip_tags
 import logging
@@ -677,11 +676,10 @@ class StructureLostArmor(NotificationPing):
 
         if structure_name != "Unknown":
             epoch_time = int(time.time())
-            rcon = get_redis_connection()
-            rcon.zadd("ctpingermute", epoch_time, structure_name)
-            rcount = rcon.zcard("ctpingermute")
+            cache_client.zadd("ctpingermute", epoch_time, structure_name)
+            rcount = cache_client.zcard("ctpingermute")
             if rcount > 5:
-                rcon.bzpopmin("ctpingermute")
+                cache_client.bzpopmin("ctpingermute")
 
 
 class StructureUnderAttack(NotificationPing):
@@ -795,11 +793,10 @@ class StructureUnderAttack(NotificationPing):
 
         if structure_name != "Unknown":
             epoch_time = int(time.time())
-            rcon = get_redis_connection()
-            rcon.zadd("ctpingermute", {structure_name: epoch_time})
-            rcount = rcon.zcard("ctpingermute")
+            cache_client.zadd("ctpingermute", {structure_name: epoch_time})
+            rcount = cache_client.zcard("ctpingermute")
             if rcount > 5:
-                rcon.bzpopmin("ctpingermute")
+                cache_client.bzpopmin("ctpingermute")
 
 
 class SovStructureReinforced(NotificationPing):

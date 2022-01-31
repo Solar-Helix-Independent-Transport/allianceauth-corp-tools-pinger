@@ -1,5 +1,4 @@
 # Cog Stuff
-from django_redis import get_redis_connection
 from aadiscordbot.cogs.utils.decorators import sender_has_perm
 from allianceauth.services.modules.discord.models import DiscordUser
 from discord.ext import commands
@@ -19,7 +18,7 @@ from pinger.models import MutedStructure, PingerConfig
 from corptools.models import EveLocation
 
 from aadiscordbot import app_settings
-
+from .providers import cache_client
 import logging
 
 logger = logging.getLogger(__name__)
@@ -87,8 +86,7 @@ class Pinger(commands.Cog):
 
     async def get_recent(self, ctx: AutocompleteContext):
         """Returns a list of colors that begin with the characters entered so far."""
-        r = get_redis_connection()
-        recent = r.zrange("ctpingermute", 0, 4, "REV")
+        recent = cache_client.zrange("ctpingermute", 0, 4, "REV")
         output = []
         for i in recent:
             output.append(i.decode('utf-8'))
@@ -152,7 +150,7 @@ class Pinger(commands.Cog):
                 if last_char:
                     last_char_model = EveCharacter.objects.get(
                         character_id=last_char)
-                    if last_update < 1:
+                    if last_update < -60:
                         done[c[1]
                              ] = f"{c[1]} Total Characters : {len(chars)}, Last Character: {last_char_model.character_name} ({last_char}), Next Update: {last_update} Seconds"
                 else:

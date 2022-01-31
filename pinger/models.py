@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 from allianceauth.eveonline.models import EveAllianceInfo, EveCorporationInfo
-from corptools.models import MapRegion
+from corptools.models import MapRegion, Structure
 from django.db.models.deletion import CASCADE
 from django.utils import timezone
 from datetime import timedelta
@@ -60,6 +60,26 @@ class Ping(models.Model):
                 self.id
             ]
         )
+
+
+class FuelPingRecord(models.Model):
+    lo_level = models.IntegerField(
+        null=True, default=None, blank=True)  # ozone level
+    last_ping_lo_level = models.IntegerField(
+        null=True, default=None, blank=True)  # ozone remaining @last ping
+
+    date_empty = models.DateTimeField(
+        null=True, default=None, blank=True)  # expiry
+    last_ping_time = models.IntegerField(
+        null=True, default=None, blank=True)  # hours remaining @last ping
+
+    structure = models.ForeignKey(
+        Structure, on_delete=models.CASCADE, null=True, default=None)
+
+    last_update = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return "Fuel Ping for: %s" % self.structure.name
 
 
 class PingerConfig(models.Model):
