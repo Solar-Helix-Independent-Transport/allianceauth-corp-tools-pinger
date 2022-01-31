@@ -1,25 +1,45 @@
 # High Performance Pings
 
-Leverage the corptools data to notify via discord certain events at a corp/alliance level with h
+Leverage the corptools data to notify via discord certain events at a corp/alliance level
 
 filter on/off regions/const/system/corps/alliances/types/strucutre type/notification type via admin. end specific notifications to different places via webhooks
 
 configurable @ settings
 
-Structures:
+## Structures
 
 - attack/reinforce
-- low fuel
-- abandoned
+  - StructureLostShields
+  - StructureLostArmor
+  - StructureUnderAttack
+- low fuel ()
+- abandoned ()
+- destroyed (StructureDestroyed)
+- low power (StructureWentLowPower)
+- anchoring (StructureAnchoring)
+- unanchoring (StructureUnanchoring)
+- high power (StructureWentHighPower)
+- transfer (OwnershipTransferred)
 
-pos:
+## POS
 
 - attack/reinforce
-- low fuel
+  - TowerAlertMsg
 
-sov:
+## Sov
 
 - attacks
-- pos anchoring
+  - SovStructureReinforced
+  - EntosisCaptureStarted
+- pos anchoring (AllAnchoringMsg)
 
-add timers to the timer board as needed
+## Moons
+
+- Extraction Started (MoonminingExtractionStarted)
+- Extraction Complete (MoonminingExtractionFinished)
+- Laser Fired (MoonminingLaserFired)
+- auto fracture (MoonminingAutomaticFracture)
+
+## HR
+
+- New application (CorpAppNewMsg)
