@@ -6,6 +6,8 @@ filter on/off regions/const/system/corps/alliances/types/strucutre type/notifica
 
 configurable @ settings
 
+# What Pings are Available:
+
 ## Structures
 
 - attack/reinforce
@@ -43,3 +45,34 @@ configurable @ settings
 ## HR
 
 - New application (CorpAppNewMsg)
+
+# Optimisation
+
+## Separate Worker Queue
+
+Edit `myauth/myauth/celery.py`
+
+```python
+app.conf.task_routes = {.....
+                        'pinger.tasks.corporation_notification_update': {'queue':'pingbot'},
+                        .....
+                        }
+```
+
+Add program block to `supervisor.conf`
+
+```ini
+[program:pingbot]
+command=/path/to/venv/venv/bin/celery -A myauth worker --pool=threads --concurrency=5 -Q pingbot
+directory=/home/allianceserver/myauth
+user=allianceserver
+numprocs=1
+stdout_logfile=/home/allianceserver/myauth/log/pingbot.log
+stderr_logfile=/home/allianceserver/myauth/log/pingbot.log
+autostart=true
+autorestart=true
+startsecs=10
+stopwaitsecs=60
+killasgroup=true
+priority=998
+```
