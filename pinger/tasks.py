@@ -189,7 +189,8 @@ def fuel_ping_builder(structure, days, message):
 
 @shared_task(bind=True, base=QueueOnce, max_retries=None)
 def corporation_fuel_check(self, corporation_id):
-
+    logger.info(
+        f"PINGER: FUEL Sending Starting Fuel Checks for {corporation_id}")
     fuel_structures = Structure.objects.filter(
         corporation__corporation__corporation_id=corporation_id)
 

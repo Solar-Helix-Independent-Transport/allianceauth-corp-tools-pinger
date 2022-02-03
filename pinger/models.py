@@ -8,6 +8,9 @@ from corptools.models import MapRegion, Structure
 from django.db.models.deletion import CASCADE
 from django.utils import timezone
 from datetime import timedelta
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class PingType(models.Model):
@@ -133,8 +136,13 @@ class FuelPingRecord(models.Model):
 
     def ping_task_ob(self, message):
         embed = self.build_ping_ob(message)
+        logger.info(
+            f"PINGER: FUEL Sending Pings for {self.structure.name}")
+
         webhooks = DiscordWebhook.objects.filter(fuel_pings=True)\
             .prefetch_related("alliance_filter", "corporation_filter", "region_filter")
+        logger.info(
+            f"PINGER: FUEL Webhooks {webhooks.count()}")
 
         for hook in webhooks:
             regions = hook.region_filter.all().values_list("region_id", flat=True)
@@ -150,14 +158,20 @@ class FuelPingRecord(models.Model):
 
             if corp_filter is not None and len(corporations) > 0:
                 if corp_filter not in corporations:
+                    logger.info(
+                        f"PINGER: FUEL  Skipped {self.structure.name} Corp {corp_filter} not in {corporations}")
                     continue
 
             if alli_filter is not None and len(alliances) > 0:
                 if alli_filter not in alliances:
+                    logger.info(
+                        f"PINGER: FUEL  Skipped {self.structure.name} Alliance {alli_filter} not in {alli_filter}")
                     continue
 
             if region_filter is not None and len(regions) > 0:
                 if region_filter not in regions:
+                    logger.info(
+                        f"PINGER: FUEL  Skipped {self.structure.name} Region {region_filter} not in {regions}")
                     continue
 
             alert = False
