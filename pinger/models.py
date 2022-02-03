@@ -1,3 +1,6 @@
+from operator import mod
+from pyexpat import model
+import json
 from django.core.exceptions import ValidationError
 from django.db import models
 from allianceauth.eveonline.models import EveAllianceInfo, EveCorporationInfo
@@ -34,6 +37,9 @@ class DiscordWebhook(models.Model):
     ping_types = models.ManyToManyField(PingType,
                                         blank=True)
 
+    fuel_pings = models.BooleanField(default=False)
+    lo_pings = models.BooleanField(default=False)
+
 
 class Ping(models.Model):
     notification_id = models.BigIntegerField()
@@ -67,7 +73,7 @@ class FuelPingRecord(models.Model):
         null=True, default=None, blank=True)  # ozone level
     last_ping_lo_level = models.IntegerField(
         null=True, default=None, blank=True)  # ozone remaining @last ping
-
+    last_message = models.TextField(default="", blank=True)
     date_empty = models.DateTimeField(
         null=True, default=None, blank=True)  # expiry
     last_ping_time = models.IntegerField(
@@ -80,6 +86,88 @@ class FuelPingRecord(models.Model):
 
     def __str__(self):
         return "Fuel Ping for: %s" % self.structure.name
+
+    def build_ping_ob(self, message):
+        _title = f"{self.structure.name}"
+
+        _system_name = f"[{self.structure.system_name.name}](http://evemaps.dotlan.net/system/{self.structure.system_name.name.replace(' ', '_')})"
+
+        _url = f"https://imageserver.eveonline.com/Type/{self.structure.type_id}_64.png"
+
+        _services = ",".join(self.structure.structureservice_set.filter(
+            state='online').values_list('name', flat=True))
+        if len(_services) == 0:
+            _services = "None"
+
+        corp_ticker = self.structure.corporation.corporation.corporation_ticker
+        corp_name = self.structure.corporation.corporation.corporation_name
+        corp_id = self.structure.corporation.corporation.corporation_id
+        footer = {"icon_url": f"https://imageserver.eveonline.com/Corporation/{corp_id}_64.png",
+                  "text": f"{corp_name} ({corp_ticker})"}
+
+        custom_data = {'color': 15158332,
+                       'title': _title,
+                       'footer': footer,
+                       'description': message,
+                       'fields': [{'name': 'System',
+                                   'value': _system_name,
+                                   'inline': False},
+                                  ]}
+
+        if self.structure.fuel_expires:
+            daysLeft = (self.structure.fuel_expires - timezone.now()).days
+
+            custom_data['fields'].append({'name': 'Fuel Expires',
+                                          'value': self.structure.fuel_expires.strftime("%Y-%m-%d %H:%M"),
+                                          'inline': True})
+            custom_data['fields'].append({'name': 'Days Remaining',
+                                          'value': str(daysLeft),
+                                          'inline': True})
+            custom_data['fields'].append({'name': 'Online Services',
+                                          'value': _services,
+                                          'inline': False})
+
+        custom_data['image'] = {'url': _url}
+
+        return custom_data
+
+    def ping_task_ob(self, message):
+        embed = self.build_ping_ob(message)
+        webhooks = DiscordWebhook.objects.filter(fuel_pings=True)\
+            .prefetch_related("alliance_filter", "corporation_filter", "region_filter")
+
+        for hook in webhooks:
+            regions = hook.region_filter.all().values_list("region_id", flat=True)
+            alliances = hook.alliance_filter.all().values_list("alliance_id", flat=True)
+            corporations = hook.corporation_filter.all(
+            ).values_list("corporation_id", flat=True)
+
+            corp_filter = self.structure.corporation.corporation.corporation_id
+            alli_filter = self.structure.corporation.corporation.corporation_id
+            region_filter = self.structure.system_name.constellation.region.region_id
+
+            if corp_filter is not None and len(corporations) > 0:
+                if corp_filter not in corporations:
+                    continue
+
+            if alli_filter is not None and len(alliances) > 0:
+                if alli_filter not in alliances:
+                    continue
+
+            if region_filter is not None and len(regions) > 0:
+                if region_filter not in regions:
+                    continue
+
+            alert = False
+            if (self.structure.fuel_expires - timezone.now()).days < 3:
+                alert = True
+            p = Ping.objects.create(notification_id=-1*self.structure.structure_id,
+                                    hook=hook,
+                                    body=json.dumps(embed),
+                                    time=timezone.now(),
+                                    alerting=alert
+                                    )
+            p.send_ping()
 
 
 class PingerConfig(models.Model):

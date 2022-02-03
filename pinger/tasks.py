@@ -16,11 +16,11 @@ from oauthlib.oauth2.rfc6749.errors import InvalidGrantError
 
 from corptools.task_helpers.char_tasks import update_character_notifications
 from corptools.providers import esi
-from corptools.models import CharacterAudit, CorporationAudit
+from corptools.models import CharacterAudit, CorporationAudit, Structure
 
 from django.db.models import Q
 from django.db.models import Max
-from pinger.models import DiscordWebhook, Ping, PingerConfig
+from pinger.models import DiscordWebhook, FuelPingRecord, Ping, PingerConfig
 
 from http.cookiejar import http2time
 
@@ -150,22 +150,13 @@ def bootstrap_notification_tasks():
         last_char, char_array, next_update = _get_cache_data_for_corp(cid)
         if next_update < -60:  # 1 min since last update should have fired.
             logger.warning(f"PINGER: {cid} Out of Sync, Starting back up!")
-            corporation_notification_update.apply_async(
-                args=[cid], priority=TASK_PRIO+1)
+            # corporation_notification_update.apply_async(
+            #    args=[cid], priority=TASK_PRIO+1)
 
     all_corps_in_audit = CorporationAudit.objects.all()
     for c in all_corps_in_audit:
-        queue_corporation_fuel_update.apply_async(
+        corporation_fuel_check.apply_async(
             args=[c.corporation.corporation_id], priority=TASK_PRIO+1)
-
-
-FUEL_WAIT_TIME = 60*30  # 30 minutes
-
-
-@shared_task()
-def queue_corporation_fuel_update(corporation_id):
-    corporation_fuel_check.apply_async(
-        args=[corporation_id], priority=(TASK_PRIO+1), countdown=FUEL_WAIT_TIME)
 
 
 @shared_task()
@@ -174,10 +165,60 @@ def queue_corporation_notification_update(corporation_id, wait_time):
         args=[corporation_id], priority=(TASK_PRIO+1), countdown=wait_time)
 
 
+def fuel_ping_builder(structure, days, message):
+    pingObj = FuelPingRecord.objects.filter(
+        last_message=message, last_ping_lo_level__isnull=True, structure=structure, date_empty=structure.fuel_expires).exists()
+    if not pingObj:
+        #logger.info("new ping: %s %s"% (_structure,_pingText))
+
+        n = FuelPingRecord(
+            structure=structure,
+            last_ping_time=days,
+            last_message=message,
+            date_empty=structure.fuel_expires)
+        n.save()
+        old = FuelPingRecord.objects.filter(
+            last_ping_lo_level__isnull=True, structure=structure).exclude(pk=n.pk)
+        if old.exists():
+            # logger.debug("new ping %s" % str(structure.name))
+            old.delete()
+        n.ping_task_ob(message)
+        return True
+    else:
+        #logger.info("already pinged: %s %s"% (_structure,_pingText))
+        return False
+
+
 @shared_task(bind=True, base=QueueOnce, max_retries=None)
 def corporation_fuel_check(self, corporation_id):
-    # get oldest token and update notifications chained with a notification check
-    pass
+
+    fuel_structures = Structure.objects.filter(
+        corporation__corporation__corporation_id=corporation_id)
+
+    for struct in fuel_structures:
+        daysLeft = 0
+        if not struct.fuel_expires:
+            continue  # use the eve notifications
+
+        daysLeft = (struct.fuel_expires -
+                    datetime.datetime.now(timezone.utc)).days
+
+        if daysLeft < 15:
+            if 0 <= daysLeft < 2:
+                pinged = fuel_ping_builder(
+                    struct, daysLeft, "Critical Fuel! :ambulance:")
+            elif 2 <= daysLeft < 3:
+                pinged = fuel_ping_builder(
+                    struct, daysLeft, "Critical Fuel! :ambulance: :eyes:")
+            elif 3 <= daysLeft < 8:
+                pinged = fuel_ping_builder(struct, daysLeft, "Low Fuel")
+            elif 8 <= daysLeft:
+                pinged = fuel_ping_builder(struct, daysLeft, "Low Fuel")
+        else:
+            old = FuelPingRecord.objects.filter(
+                last_ping_lo_level__isnull=True, structure=struct)
+            if old.exists():
+                old.delete()
 
 
 @shared_task(bind=True, base=QueueOnce, max_retries=None)
@@ -434,13 +475,15 @@ def _get_cooloff_time(wh_id):
 @shared_task(bind=True, max_retries=None)
 def send_ping(self, ping_id):
     ping_ob = Ping.objects.get(id=ping_id)
-    saved = cache_client.sadd(
-        "ct-pinger-ping-lock-set", f"{ping_id}{ping_ob.notification_id}")
-    if saved == 0:
-        logger.info(f"PINGER: DUPLICATE skipping {ping_ob.notification_id}")
-        ping_ob.ping_sent = True
-        ping_ob.save()
-        return
+    if ping_ob.notification_id > 0:
+        saved = cache_client.sadd(
+            "ct-pinger-ping-lock-set", f"{ping_id}{ping_ob.notification_id}")
+        if saved == 0:
+            logger.info(
+                f"PINGER: DUPLICATE skipping {ping_ob.notification_id}")
+            ping_ob.ping_sent = True
+            ping_ob.save()
+            return
 
     wh_sleep = _get_cooloff_time(ping_ob.hook.id)
     if wh_sleep > 0:
@@ -474,8 +517,9 @@ def send_ping(self, ping_id):
         ping_ob.ping_sent = True
         ping_ob.save()
     elif response.status_code == 429:
-        saved = cache_client.srem(
-            "ct-pinger-ping-lock-set", f"{ping_id}{ping_ob.notification_id}")
+        if ping_ob.notification_id > 0:
+            saved = cache_client.srem(
+                "ct-pinger-ping-lock-set", f"{ping_id}{ping_ob.notification_id}")
         errors = json.loads(response.content.decode('utf-8'))
         wh_sleep = (int(errors['retry_after']) / 1000) + 0.15
         logger.warning(
@@ -483,8 +527,9 @@ def send_ping(self, ping_id):
         _set_wh_cooloff(ping_ob.hook.id, wh_sleep)
         self.retry(countdown=wh_sleep)
     else:
-        saved = cache_client.srem(
-            "ct-pinger-ping-lock-set", f"{ping_id}{ping_ob.notification_id}")
+        if ping_ob.notification_id > 0:
+            saved = cache_client.srem(
+                "ct-pinger-ping-lock-set", f"{ping_id}{ping_ob.notification_id}")
         logger.error(
             f"{ping_ob.notification_id} failed ({response.status_code}) to: {url}")
         response.raise_for_status()
