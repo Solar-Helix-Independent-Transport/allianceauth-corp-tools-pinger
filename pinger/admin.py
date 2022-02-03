@@ -40,6 +40,10 @@ def sendTestPing(DiscordWebhook, request, queryset):
                 "color": 10181046,
                 "fields": [
                     {
+                        "name": "Fuel Levels",
+                                "value": "Ping Fuel: {}\nPing LO: {}".format(w.fuel_pings, w.lo_pings)
+                    },
+                    {
                         "name": "Corportaion Filter",
                                 "value": "{}".format('\n'.join(corps))
                     },
@@ -142,7 +146,8 @@ class DiscordWebhookAdmin(admin.ModelAdmin):
         )
     _allis.short_description = 'Alliance Filter'
 
-    list_display = ['nickname', '_types', '_regions', '_corps', '_allis']
+    list_display = ['nickname', '_types', 'fuel_pings',
+                    'lo_pings', '_regions', '_corps', '_allis']
 
 
 admin.site.register(models.DiscordWebhook, DiscordWebhookAdmin)
