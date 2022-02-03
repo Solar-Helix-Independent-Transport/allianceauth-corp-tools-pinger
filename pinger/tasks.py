@@ -24,8 +24,6 @@ from pinger.models import DiscordWebhook, FuelPingRecord, Ping, PingerConfig
 
 from http.cookiejar import http2time
 
-from yarl import cache_clear
-
 from . import notifications
 from .providers import cache_client
 
