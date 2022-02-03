@@ -1,4 +1,3 @@
-import imp
 import time
 import datetime
 import logging
@@ -6,15 +5,13 @@ import json
 from esi.models import Token
 import requests
 
-from celery import shared_task, chain
-from celery.exceptions import TimeLimitExceeded
+from celery import shared_task
 from django.core.cache import cache
 from allianceauth.services.tasks import QueueOnce
 from django.utils import timezone
 
 from oauthlib.oauth2.rfc6749.errors import InvalidGrantError
 
-from corptools.task_helpers.char_tasks import update_character_notifications
 from corptools.providers import esi
 from corptools.models import CharacterAudit, CorporationAudit, Structure
 

@@ -6,7 +6,6 @@ from discord.commands import SlashCommandGroup, Option
 
 from discord import AutocompleteContext
 # AA Contexts
-import pprint
 from corptools.models import CharacterAudit
 from django.conf import settings
 from django.db.models.query_utils import Q
