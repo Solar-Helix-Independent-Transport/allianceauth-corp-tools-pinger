@@ -153,6 +153,8 @@ class DiscordWebhookAdmin(admin.ModelAdmin):
 admin.site.register(models.DiscordWebhook, DiscordWebhookAdmin)
 
 admin.site.register(models.PingType)
+admin.site.register(models.FuelPingRecord)
+admin.site.register(models.MutedStructure)
 
 
 class SettingsAdmin(admin.ModelAdmin):

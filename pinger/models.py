@@ -143,7 +143,9 @@ class FuelPingRecord(models.Model):
             ).values_list("corporation_id", flat=True)
 
             corp_filter = self.structure.corporation.corporation.corporation_id
-            alli_filter = self.structure.corporation.corporation.corporation_id
+            alli_filter = self.structure.corporation.corporation.alliance
+            if alli_filter:
+                alli_filter = alli_filter.alliance_id
             region_filter = self.structure.system_name.constellation.region.region_id
 
             if corp_filter is not None and len(corporations) > 0:
