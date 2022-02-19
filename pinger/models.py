@@ -1,5 +1,3 @@
-from operator import mod
-from pyexpat import model
 import json
 from django.core.exceptions import ValidationError
 from django.db import models
