@@ -6,7 +6,7 @@ from discord.commands import SlashCommandGroup, Option
 
 from discord import AutocompleteContext
 # AA Contexts
-from corptools.models import CharacterAudit
+from corptools.models import CharacterAudit, MapSystemMoon
 from django.conf import settings
 from django.db.models.query_utils import Q
 from allianceauth.eveonline.models import EveCharacter
@@ -36,10 +36,16 @@ class Pinger(commands.Cog):
 
     def mute_str(self, input_name):
         locs = EveLocation.objects.filter(location_name=input_name)
+        moon = MapSystemMoon.objects.filter(name=input_name)
         if locs.count() > 0:
             for loc in locs:
                 muted, _ = MutedStructure.objects.update_or_create(
                     structure_id=loc.location_id)
+            return True
+        elif moon.count() > 0:
+            for loc in moon:
+                muted, _ = MutedStructure.objects.update_or_create(
+                    structure_id=loc.moon_id)
             return True
         else:
             return False

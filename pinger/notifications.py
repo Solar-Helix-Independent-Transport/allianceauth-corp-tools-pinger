@@ -994,6 +994,17 @@ class TowerAlertMsg(NotificationPing):
     """
 
     def build_ping(self):
+        try:
+            muted = MutedStructure.objects.get(
+                structure_id=self._data['moonID'])
+            if muted.expired():
+                muted.delete()
+            else:
+                raise MutedException()
+        except MutedStructure.DoesNotExist:
+            # no mutes move on
+            pass
+
         system_db = ctm.MapSystem.objects.get(
             system_id=self._data['solarSystemID'])
 
@@ -1059,6 +1070,13 @@ class TowerAlertMsg(NotificationPing):
         self._alli = self._notification.character.character.alliance_id
         self._region = system_db.constellation.region.region_id
         self.force_at_ping = True
+
+        if moon.name:
+            epoch_time = int(time.time())
+            cache_client.zadd("ctpingermute", {moon.name: epoch_time})
+            rcount = cache_client.zcard("ctpingermute")
+            if rcount > 5:
+                cache_client.bzpopmin("ctpingermute")
 
 
 class StructureAnchoring(NotificationPing):
