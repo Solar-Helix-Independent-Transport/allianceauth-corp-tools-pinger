@@ -35,8 +35,8 @@ class Pinger(commands.Cog):
         "pinger", "Infra Pinger Commands", guild_ids=[int(settings.DISCORD_GUILD_ID)])
 
     def mute_str(self, input_name):
-        locs = EveLocation.objects.filter(location_name=input_name)
-        moon = MapSystemMoon.objects.filter(name=input_name)
+        locs = EveLocation.objects.filter(location_name=input_name.strip())
+        moon = MapSystemMoon.objects.filter(name=input_name.strip())
         if locs.count() > 0:
             for loc in locs:
                 muted, _ = MutedStructure.objects.update_or_create(
