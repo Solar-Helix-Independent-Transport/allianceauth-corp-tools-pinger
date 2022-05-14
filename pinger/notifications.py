@@ -957,12 +957,17 @@ class OwnershipTransferred(NotificationPing):
         footer = {"icon_url": "https://imageserver.eveonline.com/Corporation/%s_64.png" % (str(corp_id)),
                   "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
 
-        fields = [{'name': 'Structure', 'value': structure_name, 'inline': True},
-                  {'name': 'System', 'value': system_name, 'inline': True},
-                  {'name': 'Region', 'value': region_name, 'inline': True},
-                  {'name': 'Type', 'value': structure_type.name, 'inline': True},
-                  {'name': 'Originator', 'value': originator.name, 'inline': True}
-                  ]
+        fields = []
+        if structure_name.length > 0:
+            fields.append(
+                {'name': 'Structure', 'value': structure_name, 'inline': True})
+
+        fields += [
+            {'name': 'System', 'value': system_name, 'inline': True},
+            {'name': 'Region', 'value': region_name, 'inline': True},
+            {'name': 'Type', 'value': structure_type.name, 'inline': True},
+            {'name': 'Originator', 'value': originator.name, 'inline': True}
+        ]
 
         self.package_ping(title,
                           body,

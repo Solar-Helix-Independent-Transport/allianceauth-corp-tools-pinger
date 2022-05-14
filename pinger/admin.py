@@ -14,7 +14,16 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-admin.site.register(models.Ping)
+
+class PingAdmin(admin.ModelAdmin):
+    list_display = ('time',
+                    'ping_sent',
+                    'alerting',
+                    'notification_id',
+                    'hook')
+
+
+admin.site.register(models.Ping, PingAdmin)
 
 
 @admin.action(description='Send Test Ping')
@@ -154,12 +163,60 @@ admin.site.register(models.DiscordWebhook, DiscordWebhookAdmin)
 
 admin.site.register(models.PingType)
 admin.site.register(models.FuelPingRecord)
-admin.site.register(models.MutedStructure)
+
+
+class MuteAdmin(admin.ModelAdmin):
+    list_display = ('structure_id',
+                    'date_added'
+                    )
+
+
+admin.site.register(models.MutedStructure, MuteAdmin)
 
 
 class SettingsAdmin(admin.ModelAdmin):
     filter_horizontal = ('AllianceLimiter',
                          'CorporationLimiter')
+
+    def _list_2_html_w_tooltips(self, my_items: list, max_items: int) -> str:
+        """converts list of strings into HTML with cutoff and tooltip"""
+        items_truncated_str = format_html('<br> '.join(my_items[:max_items]))
+        if not my_items:
+            result = None
+        elif len(my_items) <= max_items:
+            result = items_truncated_str
+        else:
+            items_truncated_str += format_html('<br> (...)')
+            items_all_str = format_html('<br> '.join(my_items))
+            result = format_html(
+                '<span data-tooltip="{}" class="tooltip">{}</span>',
+                items_all_str,
+                items_truncated_str
+            )
+        return result
+
+    def _corps(self, obj):
+        my_corps = [x.corporation_name for x in obj.CorporationLimiter.order_by(
+            'corporation_name')]
+
+        return self._list_2_html_w_tooltips(
+            my_corps,
+            10
+        )
+    _corps.short_description = 'Corporation Limiter'
+
+    def _allis(self, obj):
+        my_allis = [
+            x.alliance_name for x in obj.AllianceLimiter.order_by('alliance_name')]
+
+        return self._list_2_html_w_tooltips(
+            my_allis,
+            10
+        )
+    _allis.short_description = 'Alliance Limiter'
+
+    list_display = ['__str__', '_corps', '_allis',
+                    "min_time_between_updates", "discord_mute_channels"]
 
 
 admin.site.register(models.PingerConfig, SettingsAdmin)
