@@ -309,18 +309,18 @@ def corporation_notification_update(self, corporation_id):
                 f"PINGER: CACHE: Almost expired cache {token.character_name}, retrying with this character in {secs_till_expire + 1} seconds")
             _set_cache_data_for_corp(
                 corporation_id, last_character, all_chars_in_corp, 0)
-            # self.retry(countdown=secs_till_expire+1)
+            self.retry(countdown=secs_till_expire+1)
         elif secs_till_expire < 570:
             logger.warning(
                 f"PINGER: CACHE: Mid cache cycle {token.character_name}, retrying with next character")
-            # self.retry(countdown=1)
+            self.retry(countdown=1)
 
         _set_last_cache_expire(character_id, next_expire)
 
         pingable_notifs = []
         pinged_already = set(
             list(Ping.objects.values_list("notification_id", flat=True)))
-        cuttoff = timezone.now() - datetime.timedelta(hours=10000)
+        cuttoff = timezone.now() - datetime.timedelta(hours=1)
 
         for n in notifs:
             if n.get('timestamp') > cuttoff:
@@ -368,7 +368,7 @@ class Notification:
 
 @shared_task(bind=True, base=QueueOnce)
 def process_notifications(self, cid, notifs):
-    cuttoff = timezone.now() - datetime.timedelta(hours=100000)
+    cuttoff = timezone.now() - datetime.timedelta(hours=1)
     char = CharacterAudit.objects.get(character__character_id=cid)
     new_notifs = []
 
