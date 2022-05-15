@@ -1,5 +1,7 @@
 from logging import exception
+import sys
 from allianceauth.eveonline.models import EveCharacter
+from allianceauth.timerboard.models import Timer
 from django.db import models
 import yaml
 import json
@@ -14,7 +16,17 @@ from .providers import cache_client
 
 from django.utils.html import strip_tags
 import logging
+from django.apps import apps
+
 logger = logging.getLogger(__name__)
+
+
+def timers_enabled():
+    return apps.is_installed("allianceauth.timerboard")
+
+
+if timers_enabled():  # NOQA
+    from allianceauth.timerboard.models import TimerType, Timer
 
 
 class MutedException(Exception):
@@ -54,6 +66,17 @@ def time_till_to_dt(ms, timestamp):
     return timestamp + _refTimeDelta
 
 
+def create_timer(structure, system, timer_type, date, corporation):
+    # Pre process??? add anything new???
+    return Timer(
+        details=f"{structure} (Auto)",
+        system=system,
+        timer_type=timer_type,
+        eve_time=date,
+        eve_corp=corporation,
+    )
+
+
 def get_available_types():
     classes = NotificationPing.__subclasses__()
 
@@ -69,6 +92,7 @@ class NotificationPing:
     # Settings
     force_at_ping = False
     category = "None"
+    timer = False
 
     # Data
     _notification = None
@@ -596,6 +620,19 @@ class StructureLostShields(NotificationPing):
                           footer=footer,
                           colour=7419530)
 
+        if timers_enabled():
+            try:
+                self.timer = create_timer(
+                    structure_name,
+                    system_db.name,
+                    TimerType.ARMOR,
+                    ref_date_time,
+                    self._notification.character.character.corporation
+                )
+            except Exception as e:
+                logger.exception(
+                    "PINGER: Failed to build timer StructureLostShields")
+
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
         self._region = system_db.constellation.region.region_id
@@ -670,16 +707,22 @@ class StructureLostArmor(NotificationPing):
                           footer=footer,
                           colour=7419530)
 
+        if timers_enabled():
+            try:
+                self.timer = create_timer(
+                    structure_name,
+                    system_db.name,
+                    TimerType.HULL,
+                    ref_date_time,
+                    self._notification.character.character.corporation
+                )
+            except Exception as e:
+                logger.exception(
+                    "PINGER: Failed to build timer StructureLostArmor")
+
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
         self._region = system_db.constellation.region.region_id
-
-        if structure_name != "Unknown":
-            epoch_time = int(time.time())
-            cache_client.zadd("ctpingermute", epoch_time, structure_name)
-            rcount = cache_client.zcard("ctpingermute")
-            if rcount > 5:
-                cache_client.bzpopmin("ctpingermute")
 
 
 class StructureUnderAttack(NotificationPing):
@@ -822,7 +865,7 @@ class SovStructureReinforced(NotificationPing):
 
         title = "Entosis notification"
         body = "Sov Struct Reinforced in %s" % system_name
-
+        sov_type = "Unknown"
         if self._data['campaignEventType'] == 1:
             body = "TCU Reinforced in %s" % system_name
             sov_type = "TCU"
@@ -852,6 +895,18 @@ class SovStructureReinforced(NotificationPing):
                           fields=fields,
                           footer=footer,
                           colour=7419530)
+        if timers_enabled():
+            try:
+                self.timer = create_timer(
+                    sov_type,
+                    system_db.name,
+                    TimerType.HULL,
+                    ref_time_delta,
+                    self._notification.character.character.corporation
+                )
+            except Exception as e:
+                logger.exception(
+                    "PINGER: Failed to build timer SovStructureReinforced")
 
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
@@ -958,7 +1013,7 @@ class OwnershipTransferred(NotificationPing):
                   "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
 
         fields = []
-        if structure_name.length > 0:
+        if len(structure_name) > 0:
             fields.append(
                 {'name': 'Structure', 'value': structure_name, 'inline': True})
 
@@ -1040,23 +1095,25 @@ class TowerAlertMsg(NotificationPing):
         footer = {"icon_url": "https://imageserver.eveonline.com/Corporation/%s_64.png" % (str(corp_id)),
                   "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
 
-        attacking_char, _ = ctm.EveName.objects.get_or_create_from_esi(
-            self._data['aggressorID'])
-        attacking_char_corp, _ = ctm.EveName.objects.get_or_create_from_esi(
-            self._data['aggressorCorpID'])
-        attacking_alliance_name = ""
-        if self._data.get('aggressorAllianceID', False):
-            attacking_char_alliance, _ = ctm.EveName.objects.get_or_create_from_esi(
-                self._data['aggressorAllianceID'])
-            attacking_alliance_name = attacking_char_alliance.name
+        attackerStr = "Unknown"
+        if self._data['aggressorID']:
+            attacking_char, _ = ctm.EveName.objects.get_or_create_from_esi(
+                self._data['aggressorID'])
+            attacking_char_corp, _ = ctm.EveName.objects.get_or_create_from_esi(
+                self._data['aggressorCorpID'])
+            attacking_alliance_name = ""
+            if self._data.get('aggressorAllianceID', False):
+                attacking_char_alliance, _ = ctm.EveName.objects.get_or_create_from_esi(
+                    self._data['aggressorAllianceID'])
+                attacking_alliance_name = attacking_char_alliance.name
 
-        attackerStr = "*[%s](https://zkillboard.com/search/%s/)*, [%s](https://zkillboard.com/search/%s/), **[%s](https://zkillboard.com/search/%s/)**" % \
-            (attacking_char.name,
-             attacking_char.name.replace(" ", "%20"),
-             attacking_char_corp.name,
-             attacking_char_corp.name.replace(" ", "%20"),
-             attacking_alliance_name,
-             attacking_alliance_name.replace(" ", "%20"))
+            attackerStr = "*[%s](https://zkillboard.com/search/%s/)*, [%s](https://zkillboard.com/search/%s/), **[%s](https://zkillboard.com/search/%s/)**" % \
+                (attacking_char.name,
+                 attacking_char.name.replace(" ", "%20"),
+                 attacking_char_corp.name,
+                 attacking_char_corp.name.replace(" ", "%20"),
+                 attacking_alliance_name,
+                 attacking_alliance_name.replace(" ", "%20"))
 
         fields = [{'name': 'Moon', 'value': moon.name, 'inline': True},
                   {'name': 'System', 'value': system_name, 'inline': True},
