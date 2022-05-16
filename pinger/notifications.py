@@ -1,4 +1,5 @@
 from logging import exception
+import struct
 import sys
 from allianceauth.eveonline.models import EveCharacter
 from allianceauth.timerboard.models import Timer
@@ -66,11 +67,12 @@ def time_till_to_dt(ms, timestamp):
     return timestamp + _refTimeDelta
 
 
-def create_timer(structure, system, timer_type, date, corporation):
+def create_timer(structure, structure_type, system, timer_type, date, corporation):
     # Pre process??? add anything new???
     return Timer(
         details=f"{structure} (Auto)",
         system=system,
+        structure=structure_type,
         timer_type=timer_type,
         eve_time=date,
         eve_corp=corporation,
@@ -624,6 +626,7 @@ class StructureLostShields(NotificationPing):
             try:
                 self.timer = create_timer(
                     structure_name,
+                    structure_type.name,
                     system_db.name,
                     TimerType.ARMOR,
                     ref_date_time,
@@ -711,6 +714,7 @@ class StructureLostArmor(NotificationPing):
             try:
                 self.timer = create_timer(
                     structure_name,
+                    structure_type.name,
                     system_db.name,
                     TimerType.HULL,
                     ref_date_time,
@@ -898,6 +902,7 @@ class SovStructureReinforced(NotificationPing):
         if timers_enabled():
             try:
                 self.timer = create_timer(
+                    sov_type,
                     sov_type,
                     system_db.name,
                     TimerType.HULL,
