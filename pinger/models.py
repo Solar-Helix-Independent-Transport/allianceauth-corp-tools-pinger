@@ -42,6 +42,8 @@ class DiscordWebhook(models.Model):
     fuel_pings = models.BooleanField(default=False)
     lo_pings = models.BooleanField(default=False)
 
+    no_at_pings = models.BooleanField(default=False)
+
     def __str__(self):
         return f"{self.nickname} - {self.discord_webhook[-10:]}"
 

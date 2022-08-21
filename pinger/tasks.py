@@ -320,7 +320,7 @@ def corporation_notification_update(self, corporation_id):
         pingable_notifs = []
         pinged_already = set(
             list(Ping.objects.values_list("notification_id", flat=True)))
-        cuttoff = timezone.now() - datetime.timedelta(hours=1)
+        cuttoff = timezone.now() - datetime.timedelta(hours=999999)
 
         for n in notifs:
             if n.get('timestamp') > cuttoff:
@@ -368,7 +368,7 @@ class Notification:
 
 @shared_task(bind=True, base=QueueOnce)
 def process_notifications(self, cid, notifs):
-    cuttoff = timezone.now() - datetime.timedelta(hours=1)
+    cuttoff = timezone.now() - datetime.timedelta(hours=99999)
     char = CharacterAudit.objects.get(character__character_id=cid)
     new_notifs = []
 
@@ -496,7 +496,7 @@ def send_ping(self, ping_id):
         return "Already done!"
 
     alertText = ""
-    if ping_ob.alerting == True:
+    if ping_ob.alerting and not ping_ob.hook.no_at_pings:
         alertText = '"content": "@here", '
 
     payload = '{%s"embeds": [%s]}' % (
