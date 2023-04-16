@@ -4,6 +4,7 @@ import logging
 import json
 from esi.models import Token
 import requests
+import hashlib
 
 from celery import shared_task
 from django.core.cache import cache
@@ -215,6 +216,98 @@ def corporation_fuel_check(self, corporation_id):
                 last_ping_lo_level__isnull=True, structure=struct)
             if old.exists():
                 old.delete()
+
+
+def get_lo_key():
+    return "LO_LEVEL_HASH_KEY"
+
+
+def get_lo_ping_state():
+    return "21"
+
+
+def set_lo_ping_state(hash):
+    return
+
+
+def sort_structure_list(struct_list):
+    return [x.name for x in sorted(struct_list, key=lambda x: x.name)]
+
+
+@shared_task(bind=True, base=QueueOnce, max_retries=None)
+def corporation_lo_check(self):
+    logger.info(
+        f"PINGER: Starting LO Checks")
+    fuel_structures = Structure.objects.filter(
+        type_name_id=35841).order_by("name")
+
+    low = []
+    crit = []
+    unknown = []
+
+    for struct in fuel_structures:
+        th_low = 1500000
+        th_crit = 25000
+
+        if struct.lo_th:
+            th_low = struct.lo_th.low
+            th_crit = struct.lo_th.critical
+
+        loLeft = struct.ozone_level
+        if loLeft == False:
+            unknown.append(struct)
+            continue
+
+        if loLeft < th_low:
+            if 1 <= loLeft < th_crit:
+                crit.append(struct)
+                continue
+            elif th_crit <= loLeft:
+                low.append(struct)
+                continue
+        else:
+            pass
+
+    if len(crit) or len(low) or len(unknown):
+        # build it!
+        sorted_arrays = (
+            sort_structure_list(crit),
+            sort_structure_list(low),
+            sort_structure_list(unknown)
+        )
+
+        sorted_hash = hashlib.md5(json.dumps(sorted_arrays)).hexdigest()
+
+        if get_lo_ping_state() == sorted_hash:
+            set_lo_ping_state(sorted_hash)
+            return
+        else:
+            # send pings
+            embed = {'color': 15158332,
+                     'title': "Liquid Ozone State",
+                     'description': ""
+                     }
+            gap = "               "
+            desc = []
+            if len(crit):
+                desc.append("\n**Critical Ozone Levels:**")
+                crit_block = [
+                    f"{s.ozone_level}{gap[len(str(s.ozone_level)):15]}{s.name}\n" for s in crit]
+                desc.append(f'```Liquid Ozone   Structure\n{crit_block}```')
+            if len(low):
+                desc.append("\n**Low Ozone Levels:**")
+                low_block = [
+                    f"{s.ozone_level}{gap[len(str(s.ozone_level)):15]}{s.name}\n" for s in low]
+                desc.append(f'```Liquid Ozone   Structure\n{low_block}```')
+            if len(unknown):
+                desc.append("\n**Unknown Ozone Levels:**")
+                unknown_block = [f" -             {s.name}" for s in low]
+                desc.append(f'```~~Liquid Ozone~~   Structure\n{low_block}```')
+
+            embed["description"] = "\n".join(desc)
+
+            set_lo_ping_state(sorted_hash)
+            return embed
 
 
 @shared_task(bind=True, base=QueueOnce, max_retries=None)

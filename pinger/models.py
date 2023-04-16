@@ -224,3 +224,13 @@ class MutedStructure(models.Model):
 
     def __str__(self):
         return f"{self.structure_id}"
+
+
+class StructureLoThreshold(models.Model):
+    structure = models.OneToOneField(
+        Structure, related_name="lo_th", on_delete=models.CASCADE)
+    low = models.IntegerField(default=1500000)
+    critical = models.IntegerField(default=250000)
+
+    def __str__(self):
+        return f"{self.structure.name}"
