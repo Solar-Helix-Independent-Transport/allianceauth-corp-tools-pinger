@@ -279,7 +279,8 @@ def corporation_lo_check(self):
             sort_structure_list(unknown)
         )
 
-        sorted_hash = hashlib.md5(json.dumps(sorted_arrays)).hexdigest()
+        sorted_hash = hashlib.md5(json.dumps(
+            sorted_arrays).encode()).hexdigest()
 
         if get_lo_ping_state() == sorted_hash:
             set_lo_ping_state(sorted_hash)
