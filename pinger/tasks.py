@@ -296,16 +296,19 @@ def corporation_lo_check(self):
             if len(crit):
                 desc.append("\n**Critical Ozone Levels:**")
                 crit_block = [
-                    f"{s.ozone_level}{gap[len(str(s.ozone_level)):15]}{s.name}\n" for s in crit]
+                    f"{s.ozone_level:,}{gap[len(f'{s.ozone_level:,}'):15]}{s.name}\n" for s in crit]
+                crit_block = "\n".join[crit_block]
                 desc.append(f'```Liquid Ozone   Structure\n{crit_block}```')
             if len(low):
                 desc.append("\n**Low Ozone Levels:**")
                 low_block = [
-                    f"{s.ozone_level}{gap[len(str(s.ozone_level)):15]}{s.name}\n" for s in low]
+                    f"{s.ozone_level:,}{gap[len(f'{s.ozone_level:,}'):15]}{s.name}\n" for s in low]
+                low_block = "\n".join[low_block]
                 desc.append(f'```Liquid Ozone   Structure\n{low_block}```')
             if len(unknown):
                 desc.append("\n**Unknown Ozone Levels:**")
                 unknown_block = [f" -             {s.name}" for s in low]
+                unknown_block = "\n".join[unknown_block]
                 desc.append(f'```~~Liquid Ozone~~   Structure\n{low_block}```')
 
             embed["description"] = "\n".join(desc)
