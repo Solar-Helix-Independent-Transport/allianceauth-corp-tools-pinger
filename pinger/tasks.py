@@ -10,6 +10,7 @@ from celery import shared_task
 from django.core.cache import cache
 from allianceauth.services.tasks import QueueOnce
 from django.utils import timezone
+from django.core.exceptions import ObjectDoesNotExist
 
 from oauthlib.oauth2.rfc6749.errors import InvalidGrantError
 
@@ -18,7 +19,7 @@ from corptools.models import CharacterAudit, CorporationAudit, Structure
 
 from django.db.models import Q
 from django.db.models import Max
-from pinger.models import DiscordWebhook, FuelPingRecord, Ping, PingerConfig
+from pinger.models import DiscordWebhook, FuelPingRecord, Ping, PingerConfig, StructureLoThreshold
 
 from http.cookiejar import http2time
 
@@ -249,9 +250,11 @@ def corporation_lo_check(self):
         th_low = 1500000
         th_crit = 25000
 
-        if struct.lo_th:
+        try:
             th_low = struct.lo_th.low
             th_crit = struct.lo_th.critical
+        except ObjectDoesNotExist:
+            pass
 
         loLeft = struct.ozone_level
         if loLeft == False:
