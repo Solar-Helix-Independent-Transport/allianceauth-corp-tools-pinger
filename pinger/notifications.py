@@ -179,7 +179,7 @@ class AllAnchoringMsg(NotificationPing):
         owner, _ = ctm.EveName.objects.get_or_create_from_esi(
             self._data['corpID'])
 
-        alliance = "-" if owner.alliance is None else owner.alliance
+        alliance = "-" if owner.alliance is None else owner.alliance.name
 
         title = "Tower Anchoring!"
 
