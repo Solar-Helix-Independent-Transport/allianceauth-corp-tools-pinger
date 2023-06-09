@@ -432,7 +432,7 @@ def corporation_notification_update(self, corporation_id):
         next_expire = http2time(response.headers.get('Expires'))
 
         secs_till_expire = next_expire - now
-
+        print(secs_till_expire)
         if next_expire == last_expire:
             logger.info(f"PINGER: CACHE: Same Cache as last update.")
         if secs_till_expire < 30:

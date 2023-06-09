@@ -17,7 +17,6 @@ class Command(BaseCommand):
         self.stdout.write("Reading Settings!")
 
         allis, corps, _ = get_settings()
-
         self.stdout.write("Looking for Valid Corps:")
 
         # get all new corps not in cache
