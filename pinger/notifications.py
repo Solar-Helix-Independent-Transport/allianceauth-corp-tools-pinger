@@ -1786,3 +1786,78 @@ class CorpAppRejectMsg(NotificationPing):
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
         self.force_at_ping = False
+
+
+class OrbitalAttacked(NotificationPing):
+    category = "sturucture-attack"  # Structure Alerts
+
+    """
+    aggressorAllianceID: null
+    aggressorCorpID: 98729563
+    aggressorID: 90308296
+    planetID: 40066681
+    planetTypeID: 2016
+    shieldLevel: 0.0
+    solarSystemID: 30001046
+    typeID: 2233
+    """
+
+    def build_ping(self):
+        system_db = ctm.MapSystem.objects.get(
+            system_id=self._data['solarsystemID'])
+        planet_db = ctm.MapSystemPlanet.objects.get_or_create_from_esi(
+            system_id=self._data['planetID'])
+
+        system_name = system_db.name
+        region_name = system_db.constellation.region.name
+        planet_name = planet_db.name
+
+        system_name = f"[{planet_name}](http://evemaps.dotlan.net/system/{system_name.replace(' ', '_')})"
+        region_name = f"[{region_name}](http://evemaps.dotlan.net/region/{region_name.replace(' ', '_')})"
+
+        structure_type, _ = ctm.EveItemType.objects.get_or_create_from_esi(
+            self._data['typeID'])
+
+        title = "Poco Under Attack"
+        shld = float(self._data['shieldLevel'])
+        body = "Structure under Attack!\nShield Level: {0:.2f}%".format(shld)
+
+        corp_id = self._notification.character.character.corporation_id
+        corp_ticker = self._notification.character.character.corporation_ticker
+        footer = {"icon_url": "https://imageserver.eveonline.com/Corporation/%s_64.png" % (str(corp_id)),
+                  "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
+
+        attacking_char, _ = ctm.EveName.objects.get_or_create_from_esi(
+            self._data['aggressorID'])
+        attacking_corp, _ = ctm.EveName.objects.get_or_create_from_esi(
+            self._data['aggressorCorpID'])
+
+        attacking_alli = None
+        if self._data['aggressorAllianceID']:
+            attacking_alli, _ = ctm.EveName.objects.get_or_create_from_esi(
+                self._data['aggressorAllianceID'])
+
+        attackerStr = "*[%s](https://zkillboard.com/search/%s/)*, [%s](https://zkillboard.com/search/%s/), **[%s](https://zkillboard.com/search/%s/)**" % \
+            (attacking_char.name,
+             attacking_char.name.replace(" ", "%20"),
+             attacking_corp,
+             attacking_corp.replace(" ", "%20"),
+             attacking_alli if attacking_alli else "*-*",
+             attacking_alli.replace(" ", "%20") if attacking_alli else "")
+
+        fields = [{'name': 'System/Planet', 'value': system_name, 'inline': True},
+                  {'name': 'Region', 'value': region_name, 'inline': True},
+                  {'name': 'Type', 'value': structure_type.name, 'inline': True},
+                  {'name': 'Attacker', 'value': attackerStr, 'inline': False}]
+
+        self.package_ping(title,
+                          body,
+                          self._notification.timestamp,
+                          fields=fields,
+                          footer=footer,
+                          colour=15158332)
+
+        self._corp = self._notification.character.character.corporation_id
+        self._alli = self._notification.character.character.alliance_id
+        self._region = system_db.constellation.region.region_id
+        self.force_at_ping = True
