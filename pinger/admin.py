@@ -93,6 +93,74 @@ def sendTestPing(DiscordWebhook, request, queryset):
             logger.error(msg)
 
 
+
+@admin.action(description='Send Test Ping')
+def sendTestPing(DiscordWebhook, request, queryset):
+    for w in queryset:
+        types = w.ping_types.all().values_list('name', flat=True)
+        corps = w.corporation_filter.all().values_list('corporation_name', flat=True)
+        if len(corps) == 0:
+            corps = ["None"]
+
+        allis = w.alliance_filter.all().values_list('alliance_name', flat=True)
+        if len(allis) == 0:
+            allis = ["None"]
+
+        regions = w.region_filter.all().values_list('name', flat=True)
+        if len(regions) == 0:
+            regions = ["None"]
+
+        payload = {"embeds": [
+            {
+                "title": "Ping Channel Test",
+                "description": "Configured Notifications:\n\n```{}```".format('\n'.join(types)),
+                "color": 10181046,
+                "fields": [
+                    {
+                        "name": "Fuel Levels",
+                                "value": "Ping Fuel: {}\nPing LO: {}".format(w.fuel_pings, w.lo_pings)
+                    },
+                    {
+                        "name": "Corportaion Filter",
+                                "value": "{}".format('\n'.join(corps))
+                    },
+                    {
+                        "name": "Alliance Filter",
+                                "value": "{}".format('\n'.join(allis))
+                    },
+                    {
+                        "name": "Region Filter",
+                                "value": "{}".format('\n'.join(regions))
+                    }
+                ]
+            }
+        ]
+        }
+        payload = json.dumps(payload)
+        url = w.discord_webhook
+        custom_headers = {'Content-Type': 'application/json'}
+        response = requests.post(url,
+                                 headers=custom_headers,
+                                 data=payload,
+                                 params={'wait': True})
+
+        if response.status_code in [200, 204]:
+            msg = f"{w.nickname}: Test Ping Sent!"
+            messages.success(request, msg)
+            logger.debug(msg)
+        elif response.status_code == 429:
+
+            errors = json.loads(response.content.decode('utf-8'))
+            wh_sleep = (int(errors['retry_after']) / 1000) + 0.15
+            msg = f"{w.nickname}: rate limited: try again in {wh_sleep} seconds..."
+            messages.warning(request, msg)
+            logger.warning(msg)
+        else:
+            msg = f"{w.nickname}: failed ({response.status_code})"
+            messages.error(request, msg)
+            logger.error(msg)
+
+
 class DiscordWebhookAdmin(admin.ModelAdmin):
     filter_horizontal = ('ping_types',
                          'corporation_filter',

@@ -221,7 +221,6 @@ def corporation_fuel_check(self, corporation_id):
             if old.exists():
                 old.delete()
 
-
 def get_lo_key():
     return "LO_LEVEL_HASH_KEY"
 
@@ -362,6 +361,11 @@ def corporation_notification_update(self, corporation_id):
         all_chars_in_corp = set(CharacterAudit.objects.filter(characterroles__station_manager=True,
                                                               character__corporation_id=corporation_id,
                                                               active=True).values_list("character__character_id", flat=True))
+
+        all_hr_chars = list(set(CharacterAudit.objects.filter(characterroles__personnel_manager=True,
+                                                              character__corporation_id=corporation_id,
+                                                              active=True).values_list("character__character_id", flat=True)))
+
 
         all_hr_chars = list(set(CharacterAudit.objects.filter(characterroles__personnel_manager=True,
                                                               character__corporation_id=corporation_id,

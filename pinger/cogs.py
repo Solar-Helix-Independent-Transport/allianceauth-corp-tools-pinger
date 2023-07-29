@@ -7,6 +7,7 @@ from discord.commands import SlashCommandGroup, Option
 from discord import AutocompleteContext
 # AA Contexts
 from corptools.models import CharacterAudit, MapSystemMoon
+from corptools.models import CharacterAudit
 from django.conf import settings
 from django.db.models.query_utils import Q
 from allianceauth.eveonline.models import EveCharacter

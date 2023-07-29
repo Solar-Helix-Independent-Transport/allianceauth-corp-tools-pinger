@@ -1,5 +1,5 @@
 import json
-from os import nice
+
 from django.core.exceptions import ValidationError
 from django.db import models
 from allianceauth.eveonline.models import EveAllianceInfo, EveCorporationInfo
