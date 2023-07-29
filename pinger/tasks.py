@@ -456,6 +456,8 @@ def corporation_notification_update(self, corporation_id):
             if n.get('timestamp') > CUTTOFF:
                 if n.get('type') in types.keys():
                     if n.get('notification_id') not in pinged_already:
+                        n['time'] = datetime.datetime.timestamp(
+                            n.get('timestamp'))
                         pingable_notifs.append(n)
 
         logger.info(
@@ -503,8 +505,9 @@ def process_notifications(self, cid, notifs):
     CUTTOFF = timezone.now() - datetime.timedelta(hours=LOOK_BACK_HOURS)
 
     for note in notifs:
-        note['timestamp'] = datetime.datetime.fromisoformat(
-            note.get('timestamp').replace("Z", "+00:00"))
+        if not isinstance(note['timestamp'], datetime.datetime):
+            note['timestamp'] = datetime.datetime.fromtimestamp(
+                note.get('time'), tz=datetime.timezone.utc)
         if note.get('timestamp') > CUTTOFF:
             logger.info(
                 f"PINGER: {char} Got Notification {note.get('notification_id')} {note.get('type')} {note.get('timestamp')}")
