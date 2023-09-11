@@ -23,7 +23,7 @@ from pinger.models import DiscordWebhook, FuelPingRecord, Ping, PingerConfig, St
 
 from http.cookiejar import http2time
 
-from . import notifications
+from . import app_settings, notifications
 from .providers import cache_client
 
 TZ_STRING = "%Y-%m-%dT%H:%M:%SZ"
@@ -124,7 +124,7 @@ def bootstrap_notification_tasks():
     # get list of all active corp tasks from cache
     allis, corps, _ = get_settings()
     # get all new corps not in cache
-    all_member_corps_in_audit = CharacterAudit.objects.filter(character__character_ownership__user__profile__state__name__in=["Member"],
+    all_member_corps_in_audit = CharacterAudit.objects.filter(character__character_ownership__user__profile__state__name__in=[app_settings.CT_PINGER_STATES],
                                                               characterroles__station_manager=True,
                                                               active=True)
 
