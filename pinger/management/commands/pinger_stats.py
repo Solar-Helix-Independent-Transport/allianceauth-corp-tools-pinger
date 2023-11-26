@@ -8,7 +8,7 @@ from allianceauth.eveonline.models import EveCharacter
 
 
 from pinger.tasks import get_settings, _get_cache_data_for_corp
-
+from . import app_settings
 
 class Command(BaseCommand):
     help = 'Spit out stats for pinger'
@@ -22,7 +22,7 @@ class Command(BaseCommand):
         # get all new corps not in cache
         all_member_corps_in_audit = CharacterAudit.objects.filter((Q(characterroles__station_manager=True) | Q(characterroles__personnel_manager=True)),
                                                                   character__character_ownership__user__profile__state__name__in=[
-                                                                      "Member"],
+                                                                      app_settings.CT_PINGER_STATES],
                                                                   active=True)
 
         filters = []
