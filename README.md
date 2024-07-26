@@ -6,11 +6,11 @@ filter on/off regions/const/system/corps/alliances/types/strucutre type/notifica
 
 configurable @ settings
 
-# What Pings are Available:
+# What Pings are Available
 
 ## Structures
 
-- attack/reinforce
+- Attack/Reinforce
   - StructureLostShields
   - StructureLostArmor
   - StructureUnderAttack
@@ -25,26 +25,35 @@ configurable @ settings
 
 ## POS
 
-- attack/reinforce
+- Attack/Reinforce
   - TowerAlertMsg
 
 ## Sov
 
-- attacks
+- Attacks
   - SovStructureReinforced
   - EntosisCaptureStarted
-- pos anchoring (AllAnchoringMsg)
+- POS Anchoring (AllAnchoringMsg) - Currently disabled by CCP
 
 ## Moons
 
 - Extraction Started (MoonminingExtractionStarted)
 - Extraction Complete (MoonminingExtractionFinished)
 - Laser Fired (MoonminingLaserFired)
-- auto fracture (MoonminingAutomaticFracture)
+- Auto Fracture (MoonminingAutomaticFracture)
 
 ## HR
 
-- New application (CorpAppNewMsg)
+- New Application (CorpAppNewMsg)
+
+# Installation
+
+1. This app requires Corp-Tools to leverage Notification Data, install this first.
+1. `pip install allianceauth-corptools-pinger`
+1. Add `'pinger',` to your `INSTALLED_APPS` in your projects `local.py`
+1. Migrate, Collectstatic, Restart Auth.
+1. Configure Pinger at `/admin/pinger/pingerconfig/1/change/`
+1. Verify pinger is setup with `python manage.py pinger_stats`
 
 # Optimisation
 
@@ -58,6 +67,8 @@ app.conf.task_routes = {.....
                         .....
                         }
 ```
+
+### Bare Metal
 
 Add program block to `supervisor.conf`
 
@@ -75,4 +86,24 @@ startsecs=10
 stopwaitsecs=60
 killasgroup=true
 priority=998
+```
+
+### Docker Compose
+
+Add a service to your docker-compose.yml
+
+```compose
+  allianceauth_worker_pingbot:
+    <<: [*allianceauth-base, *allianceauth-health-checks]
+    entrypoint: [
+      "celery",
+      "-A",
+      "myauth",
+      "worker",
+      "--pool=threads",
+      "--concurrency=5",
+      "-Q pingbot"
+      "-n",
+      "worker_%n"
+    ]
 ```

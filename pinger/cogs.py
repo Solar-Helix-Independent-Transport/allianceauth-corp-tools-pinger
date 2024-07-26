@@ -5,23 +5,26 @@ from typing import Optional
 from aadiscordbot import app_settings
 from aadiscordbot.cogs.utils.decorators import sender_has_perm
 from aadiscordbot.tasks import send_channel_message_by_discord_id
-from allianceauth.eveonline.evelinks import dotlan
-from allianceauth.eveonline.models import EveCharacter
-from allianceauth.services.modules.discord.models import DiscordUser
 # AA Contexts
-from corptools.models import (CharacterAudit, EveLocation, MapSystem,
-                              MapSystemMoon)
+from corptools.models import (
+    CharacterAudit, EveLocation, MapSystem, MapSystemMoon,
+)
 from discord import AutocompleteContext, ButtonStyle, Embed, option, ui
 from discord.commands import Option, SlashCommandGroup
 from discord.ext import commands
+
 from django.conf import settings
 from django.db.models.query_utils import Q
 from django.utils import timezone
 
+from allianceauth.eveonline.evelinks import dotlan
+from allianceauth.eveonline.models import EveCharacter
+from allianceauth.services.modules.discord.models import DiscordUser
+
+from pinger.app_settings import CT_PINGER_VALID_STATES
 from pinger.models import MutedStructure, PingerConfig
 from pinger.tasks import _get_cache_data_for_corp, get_settings
 
-from .models import PingerConfig
 from .providers import cache_client
 
 logger = logging.getLogger(__name__)
@@ -41,7 +44,7 @@ class AttackView(ui.View):
                  found_by_uid: int = 0,
                  found_by: str = "",
                  system: str = "",
-                 timeout: Optional[float] = 60*60*24,  # 24h from last click
+                 timeout: Optional[float] = 60 * 60 * 24,  # 24h from last click
                  embed: Optional[Embed] = None,
                  bot=None
                  ):
@@ -117,7 +120,7 @@ class Pinger(commands.Cog):
         if exist:
             return await ctx.respond(f"Activity in `{system}` has already been pinged in the last 5 Minutes! Ping manually if required.", ephemeral=True)
         else:
-            await self.bot.redis.set(f"pinger-claimbot-{system}", user.name, ex=60*5)
+            await self.bot.redis.set(f"pinger-claimbot-{system}", user.name, ex=60 * 5)
 
         config = PingerConfig.objects.get(id=1)
 
@@ -152,7 +155,7 @@ class Pinger(commands.Cog):
                          "system": system}
         )
 
-        return await ctx.respond(f"sent message!", ephemeral=True)
+        return await ctx.respond("sent message!", ephemeral=True)
 
     def mute_str(self, input_name):
         locs = EveLocation.objects.filter(location_name=input_name.strip())
@@ -195,7 +198,7 @@ class Pinger(commands.Cog):
                 return True
             else:
                 return False
-        except Exception as e:
+        except Exception:
             return False
 
     def get_mute_channels(self):
@@ -216,7 +219,7 @@ class Pinger(commands.Cog):
         Mute a structure for 48h cause its being annoying.
         """
         if ctx.message.channel.id not in self.get_mute_channels():
-            return await ctx.message.reply(f"Please use this in a correct channel.")
+            return await ctx.message.reply("Please use this in a correct channel.")
 
         cmds = ctx.message.content.split(" ")[1:]
         input_name = " ".join(cmds)
@@ -240,10 +243,10 @@ class Pinger(commands.Cog):
         """
 
         if ctx.channel_id not in self.get_mute_channels():
-            return await ctx.respond(f"Please use this in a correct channel.", ephemeral=True)
+            return await ctx.respond("Please use this in a correct channel.", ephemeral=True)
 
         if not self.sender_has_structure_perm(ctx):
-            return await ctx.respond(f"You do not have permision to use this command.", ephemeral=True)
+            return await ctx.respond("You do not have permision to use this command.", ephemeral=True)
 
         if self.mute_str(structure):
             await ctx.respond(f"`{structure}` Muted for 48hours")
@@ -257,10 +260,10 @@ class Pinger(commands.Cog):
         """
 
         if ctx.channel_id not in self.get_mute_channels():
-            return await ctx.respond(f"Please use this in a correct channel.", ephemeral=True)
+            return await ctx.respond("Please use this in a correct channel.", ephemeral=True)
 
         if not self.sender_has_structure_perm(ctx):
-            return await ctx.respond(f"You do not have permision to use this command.", ephemeral=True)
+            return await ctx.respond("You do not have permision to use this command.", ephemeral=True)
 
         if self.unmute_str(structure):
             await ctx.respond(f"`{structure}` Un-Muted")
@@ -279,7 +282,7 @@ class Pinger(commands.Cog):
         allis, corps, _ = get_settings()
 
         # get all new corps not in cache
-        all_member_corps_in_audit = CharacterAudit.objects.filter(character__character_ownership__user__profile__state__name__in=["Member"],
+        all_member_corps_in_audit = CharacterAudit.objects.filter(character__character_ownership__user__profile__state__name__in=CT_PINGER_VALID_STATES,
                                                                   characterroles__station_manager=True,
                                                                   active=True)
 
