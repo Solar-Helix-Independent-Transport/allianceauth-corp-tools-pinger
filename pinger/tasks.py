@@ -151,7 +151,7 @@ def bootstrap_notification_tasks():
     corps = list(set(all_member_corps_in_audit.values_list(
         "character__corporation_id", flat=True)))
 
-    logger.warning(f"PINGER: Bootstrap found {corps.count()} to check.")
+    logger.warning(f"PINGER: Bootstrap found {len(corps)} to check.")
     # fire off tasks for each corp with active models
     for cid in corps:
         _, _, next_update = _get_cache_data_for_corp(cid)
