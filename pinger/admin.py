@@ -288,3 +288,8 @@ class SettingsAdmin(admin.ModelAdmin):
 
 
 admin.site.register(models.PingerConfig, SettingsAdmin)
+
+class FuelThresholdAdmin(admin.ModelAdmin):
+    list_display = ["time_before", "message"]
+
+admin.site.register(models.StructureFuelThreshold, FuelThresholdAdmin)
