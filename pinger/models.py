@@ -22,7 +22,7 @@ class PingType(models.Model):
 
 class StructureFuelThreshold(models.Model):
     time_before = models.DurationField()
-    message = models.TextField()
+    message = models.TextField(unique=True)
 
 
 class DiscordWebhook(models.Model):
