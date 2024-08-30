@@ -20,6 +20,11 @@ class PingType(models.Model):
         return self.name
 
 
+class StructureFuelThreshold(models.Model):
+    time_before = models.DurationField()
+    message = models.TextField()
+
+
 class DiscordWebhook(models.Model):
     nickname = models.TextField(default="Discord Webhook")
     discord_webhook = models.TextField()
