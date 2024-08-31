@@ -22,7 +22,13 @@ from allianceauth.services.tasks import QueueOnce
 from esi.models import Token
 
 from pinger.app_settings import CT_PINGER_VALID_STATES
-from pinger.models import DiscordWebhook, FuelPingRecord, Ping, PingerConfig
+from pinger.models import (
+    DiscordWebhook,
+    FuelPingRecord,
+    Ping,
+    PingerConfig,
+    StructureFuelThreshold,
+)
 
 from . import notifications
 from .notifications.base import get_available_types
@@ -175,7 +181,7 @@ def queue_corporation_notification_update(corporation_id, wait_time):
         args=[corporation_id], priority=(TASK_PRIO + 1), countdown=wait_time)
 
 
-def fuel_ping_builder(structure, days, message):
+def fuel_ping_builder(structure, message: str):
     pingObj = FuelPingRecord.objects.filter(
         last_message=message, last_ping_lo_level__isnull=True, structure=structure, date_empty=structure.fuel_expires).exists()
     if not pingObj:
@@ -183,9 +189,9 @@ def fuel_ping_builder(structure, days, message):
 
         n = FuelPingRecord(
             structure=structure,
-            last_ping_time=days,
             last_message=message,
-            date_empty=structure.fuel_expires)
+            date_empty=structure.fuel_expires,
+        )
         n.save()
         old = FuelPingRecord.objects.filter(
             last_ping_lo_level__isnull=True, structure=structure).exclude(pk=n.pk)
@@ -201,30 +207,28 @@ def fuel_ping_builder(structure, days, message):
 
 @shared_task(bind=True, base=QueueOnce, max_retries=None)
 def corporation_fuel_check(self, corporation_id):
-    logger.info(
-        f"PINGER: FUEL Sending Starting Fuel Checks for {corporation_id}")
+    logger.info(f"PINGER: FUEL Sending Starting Fuel Checks for {corporation_id}")
     fuel_structures = Structure.objects.filter(
-        corporation__corporation__corporation_id=corporation_id)
+        corporation__corporation__corporation_id=corporation_id
+    )
 
     for struct in fuel_structures:
-        daysLeft = 0
         if not struct.fuel_expires:
             continue  # use the eve notifications
 
-        daysLeft = (struct.fuel_expires - datetime.datetime.now(timezone.utc)).days
+        time_left = struct.fuel_expires - datetime.datetime.now(timezone.utc)
+        threshold = (
+            StructureFuelThreshold.objects.order_by("time_before")
+            .filter(time_before__gt=time_left)
+            .first()
+        )
 
-        if daysLeft < 15:
-            if 0 <= daysLeft < 2:
-                fuel_ping_builder(struct, daysLeft, "Critical Fuel! :ambulance:")
-            elif 2 <= daysLeft < 3:
-                fuel_ping_builder(struct, daysLeft, "Critical Fuel! :ambulance: :eyes:")
-            elif 3 <= daysLeft < 8:
-                fuel_ping_builder(struct, daysLeft, "Low Fuel")
-            elif 8 <= daysLeft:
-                fuel_ping_builder(struct, daysLeft, "Low Fuel")
+        if threshold is not None:
+            fuel_ping_builder(struct, threshold.message)
         else:
             old = FuelPingRecord.objects.filter(
-                last_ping_lo_level__isnull=True, structure=struct)
+                last_ping_lo_level__isnull=True, structure=struct
+            )
             if old.exists():
                 old.delete()
 
