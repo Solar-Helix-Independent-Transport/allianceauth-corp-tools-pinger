@@ -46,6 +46,14 @@ configurable @ settings
 
 - New Application (CorpAppNewMsg)
 
+## Corporation Projects
+
+- Started (CorporationGoalCreated)
+- Closed (CorporationGoalClosed)
+- Completed (CorporationGoalCompleted)
+- Expired (CorporationGoalExpired)
+- Limit Reached (CorporationGoalLimitReached)
+
 # Installation
 
 1. This app requires Corp-Tools to leverage Notification Data, install this first.
