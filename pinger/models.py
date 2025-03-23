@@ -21,6 +21,11 @@ class PingType(models.Model):
         return self.name
 
 
+class StructureFuelThreshold(models.Model):
+    time_before = models.DurationField()
+    message = models.TextField(unique=True)
+
+
 class DiscordWebhook(models.Model):
     nickname = models.TextField(default="Discord Webhook")
     discord_webhook = models.TextField()
@@ -85,8 +90,6 @@ class FuelPingRecord(models.Model):
     last_message = models.TextField(default="", blank=True)
     date_empty = models.DateTimeField(
         null=True, default=None, blank=True)  # expiry
-    last_ping_time = models.IntegerField(
-        null=True, default=None, blank=True)  # hours remaining @last ping
 
     structure = models.ForeignKey(
         Structure, on_delete=models.CASCADE, null=True, default=None)
