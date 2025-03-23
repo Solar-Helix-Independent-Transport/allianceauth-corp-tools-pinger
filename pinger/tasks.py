@@ -9,6 +9,7 @@ from http.cookiejar import http2time
 import requests
 from bravado.exception import HTTPError
 from celery import shared_task
+from allianceauth.eveonline.evelinks import eveimageserver
 from corptools.models import (
     CharacterAudit, CorpAsset, CorporationAudit, Structure,
 )
@@ -354,7 +355,7 @@ def corporation_lo_check(self, corporation_id):
             }
 
             footer = {
-                "icon_url": "https://imageserver.eveonline.com/Corporation/%s_64.png" % (str(corporation_id)),
+                "icon_url": eveimageserver.corporation_logo_url(corporation_id, 64),
                 "text": f"{corp.corporation_name} ({corp.corporation_ticker})"
             }
 
@@ -514,7 +515,7 @@ def corporation_gas_check(self, corporation_id):
             }
 
             footer = {
-                "icon_url": "https://imageserver.eveonline.com/Corporation/%s_64.png" % (str(corporation_id)),
+                "icon_url": eveimageserver.corporation_logo_url(corporation_id, 64),
                 "text": f"{corp.corporation_name} ({corp.corporation_ticker})"
             }
 

@@ -3,6 +3,7 @@ import logging
 from datetime import timedelta
 
 from allianceauth.eveonline.models import EveAllianceInfo, EveCorporationInfo
+from allianceauth.eveonline.evelinks import dotlan, eveimageserver
 from corptools.models import MapRegion, Structure
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -98,9 +99,9 @@ class FuelPingRecord(models.Model):
     def build_ping_ob(self, message):
         _title = f"{self.structure.name}"
 
-        _system_name = f"[{self.structure.system_name.name}](http://evemaps.dotlan.net/system/{self.structure.system_name.name.replace(' ', '_')})"
+        _system_name = f"[{self.structure.system_name.name}]({dotlan.solar_system_url(self.structure.system_name.name)})"
 
-        _url = f"https://imageserver.eveonline.com/Type/{self.structure.type_id}_64.png"
+        _url = eveimageserver.type_icon_url(self.structure.type_id, 64)
 
         _services = ",".join(self.structure.structureservice_set.filter(
             state='online').values_list('name', flat=True))
@@ -110,7 +111,7 @@ class FuelPingRecord(models.Model):
         corp_ticker = self.structure.corporation.corporation.corporation_ticker
         corp_name = self.structure.corporation.corporation.corporation_name
         corp_id = self.structure.corporation.corporation.corporation_id
-        footer = {"icon_url": f"https://imageserver.eveonline.com/Corporation/{corp_id}_64.png",
+        footer = {"icon_url": eveimageserver.corporation_logo_url(corp_id, 64),
                   "text": f"{corp_name} ({corp_ticker})"}
 
         custom_data = {'color': 15158332,

@@ -1,6 +1,7 @@
 import datetime
 import logging
 
+from allianceauth.eveonline.evelinks import dotlan, eveimageserver, zkillboard
 from corptools import models as ctm
 
 from .base import NotificationPing
@@ -40,7 +41,7 @@ class AllAnchoringMsg(NotificationPing):
             system_id=self._data['solarSystemID'])
 
         system_name = system_db.name
-        system_name = f"[{system_name}](http://evemaps.dotlan.net/system/{system_name.replace(' ', '_')})"
+        system_name = f"[{system_name}]({dotlan.solar_system_url(system_name)})"
 
         structure_type, _ = ctm.EveItemType.objects.get_or_create_from_esi(
             self._data['typeID'])
@@ -51,12 +52,13 @@ class AllAnchoringMsg(NotificationPing):
             self._data['corpID'])
 
         alliance = "-" if owner.alliance is None else owner.alliance.name
+        alliance_id = "-" if owner.alliance is None else owner.alliance.eve_id
 
         title = "Tower Anchoring!"
 
         body = (f"{structure_type.name}\n**{moon_name.name}**\n\n[{owner.name}]"
-                f"(https://zkillboard.com/search/{owner.name.replace(' ', '%20')}/),"
-                f" **[{alliance}](https://zkillboard.com/search/{alliance.replace(' ', '%20')}/)**")
+                f"({zkillboard.corporation_url(owner.eve_id)}),"
+                f" **[{alliance}]({zkillboard.alliance_url(alliance_id)})**")
 
         footer = {"icon_url": owner.get_image_url(),
                   "text": f"{owner.name}"}
@@ -105,8 +107,8 @@ class SovStructureReinforced(NotificationPing):
         system_name = system_db.name
         region_name = system_db.constellation.region.name
 
-        system_name = f"[{system_name}](http://evemaps.dotlan.net/system/{system_name.replace(' ', '_')})"
-        region_name = f"[{region_name}](http://evemaps.dotlan.net/region/{region_name.replace(' ', '_')})"
+        system_name = f"[{system_name}]({dotlan.solar_system_url(system_name)})"
+        region_name = f"[{region_name}]({dotlan.region_url(region_name)})"
 
         title = "Entosis notification"
         body = "Sov Struct Reinforced in %s" % system_name
@@ -125,7 +127,7 @@ class SovStructureReinforced(NotificationPing):
         alli_id = self._notification.character.character.alliance_id
         alli_ticker = self._notification.character.character.alliance_ticker
 
-        footer = {"icon_url": "https://images.evetech.net/alliances/%s/logo" % (str(alli_id)),
+        footer = {"icon_url": eveimageserver.alliance_logo_url(alli_id, 64),
                   "text": "%s (%s)" % (self._notification.character.character.alliance_name, alli_ticker)}
 
         fields = [{'name': 'System', 'value': system_name, 'inline': True},
@@ -178,8 +180,8 @@ class EntosisCaptureStarted(NotificationPing):
         system_name = system_db.name
         region_name = system_db.constellation.region.name
 
-        system_name = f"[{system_name}](http://evemaps.dotlan.net/system/{system_name.replace(' ', '_')})"
-        region_name = f"[{region_name}](http://evemaps.dotlan.net/region/{region_name.replace(' ', '_')})"
+        system_name = f"[{system_name}]({dotlan.solar_system_url(system_name)})"
+        region_name = f"[{region_name}]({dotlan.region_url(region_name)})"
 
         structure_type, _ = ctm.EveItemType.objects.get_or_create_from_esi(
             self._data['structureTypeID'])
@@ -192,7 +194,7 @@ class EntosisCaptureStarted(NotificationPing):
         alli_id = self._notification.character.character.alliance_id
         alli_ticker = self._notification.character.character.alliance_ticker
 
-        footer = {"icon_url": "https://images.evetech.net/alliances/%s/logo" % (str(alli_id)),
+        footer = {"icon_url": eveimageserver.alliance_logo_url(alli_id, 64),
                   "text": "%s (%s)" % (self._notification.character.character.alliance_name, alli_ticker)}
 
         fields = [{'name': 'System', 'value': system_name, 'inline': True},

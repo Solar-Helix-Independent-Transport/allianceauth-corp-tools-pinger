@@ -2,6 +2,7 @@
 import datetime
 import logging
 
+from allianceauth.eveonline.evelinks import dotlan, eveimageserver, zkillboard
 from corptools import models as ctm
 
 from django.utils import timezone
@@ -39,8 +40,8 @@ class OrbitalAttacked(NotificationPing):
         region_name = system_db.constellation.region.name
         planet_name = planet_db.name
 
-        system_name = f"[{planet_name}](http://evemaps.dotlan.net/system/{system_name.replace(' ', '_')})"
-        region_name = f"[{region_name}](http://evemaps.dotlan.net/region/{region_name.replace(' ', '_')})"
+        system_name = f"[{planet_name}]({dotlan.solar_system_url(system_name)})"
+        region_name = f"[{region_name}]({dotlan.region_url(region_name)})"
 
         structure_type, _ = ctm.EveItemType.objects.get_or_create_from_esi(
             self._data['typeID'])
@@ -52,7 +53,7 @@ class OrbitalAttacked(NotificationPing):
 
         corp_id = self._notification.character.character.corporation_id
         corp_ticker = self._notification.character.character.corporation_ticker
-        footer = {"icon_url": "https://imageserver.eveonline.com/Corporation/%s_64.png" % (str(corp_id)),
+        footer = {"icon_url": eveimageserver.corporation_logo_url(corp_id, 64),
                   "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
 
         attacking_char, _ = ctm.EveName.objects.get_or_create_from_esi(
@@ -65,13 +66,10 @@ class OrbitalAttacked(NotificationPing):
             attacking_alli, _ = ctm.EveName.objects.get_or_create_from_esi(
                 self._data['aggressorAllianceID'])
 
-        attackerStr = "*[%s](https://zkillboard.com/search/%s/)*, [%s](https://zkillboard.com/search/%s/), **[%s](https://zkillboard.com/search/%s/)**" % \
-            (attacking_char.name,
-             attacking_char.name.replace(" ", "%20"),
-             attacking_corp.name,
-             attacking_corp.name.replace(" ", "%20"),
-             attacking_alli.name if attacking_alli else "*-*",
-             attacking_alli.name.replace(" ", "%20") if attacking_alli else "")
+        attackerStr = "%s, %s, %s" % \
+            (f"*[{attacking_char.name}]({zkillboard.character_url(attacking_char.eve_id)})*",
+             f"[{attacking_corp.name}]({zkillboard.corporation_url(attacking_corp.eve_id)})",
+             f"**[{attacking_alli.name}]({zkillboard.alliance_url(attacking_alli.eve_id)})**" if attacking_alli else "")
 
         fields = [{'name': 'System/Planet', 'value': system_name, 'inline': True},
                   {'name': 'Region', 'value': region_name, 'inline': True},
@@ -113,7 +111,7 @@ class OrbitalReinforced(NotificationPing):
 
         system_name = system_db.name
         planet_name = planet_db.name
-        system_name = f"[{planet_name}](http://evemaps.dotlan.net/system/{system_name.replace(' ', '_')})"
+        system_name = f"[{planet_name}]({dotlan.solar_system_url(system_name)})"
         structure_type, _ = ctm.EveItemType.objects.get_or_create_from_esi(
             self._data['typeID'])
 
@@ -127,10 +125,10 @@ class OrbitalReinforced(NotificationPing):
 
         corp_id = self._notification.character.character.corporation_id
         corp_ticker = self._notification.character.character.corporation_ticker
-        corp_name = "[%s](https://zkillboard.com/search/%s/)" % \
+        corp_name = "[%s](%s)" % \
             (self._notification.character.character.corporation_name,
-             self._notification.character.character.corporation_name.replace(" ", "%20"))
-        footer = {"icon_url": "https://imageserver.eveonline.com/Corporation/%s_64.png" % (str(corp_id)),
+             zkillboard.corporation_url(corp_id))
+        footer = {"icon_url": eveimageserver.corporation_logo_url(corp_id, 64),
                   "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
 
         fields = [{'name': 'System', 'value': system_name, 'inline': True},
@@ -211,8 +209,8 @@ class SkyhookUnderAttack(NotificationPing):
         region_name = system_db.constellation.region.name
         planet_name = planet_db.name
 
-        system_name = f"[{planet_name}](http://evemaps.dotlan.net/system/{system_name.replace(' ', '_')})"
-        region_name = f"[{region_name}](http://evemaps.dotlan.net/region/{region_name.replace(' ', '_')})"
+        system_name = f"[{planet_name}]({dotlan.solar_system_url(system_name)})"
+        region_name = f"[{region_name}]({dotlan.region_url(region_name)})"
 
         structure_type, _ = ctm.EveItemType.objects.get_or_create_from_esi(
             self._data['typeID'])
@@ -227,7 +225,7 @@ class SkyhookUnderAttack(NotificationPing):
 
         corp_id = self._notification.character.character.corporation_id
         corp_ticker = self._notification.character.character.corporation_ticker
-        footer = {"icon_url": "https://imageserver.eveonline.com/Corporation/%s_64.png" % (str(corp_id)),
+        footer = {"icon_url": eveimageserver.corporation_logo_url(corp_id, 64),
                   "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
 
         attacking_char, _ = ctm.EveName.objects.get_or_create_from_esi(
@@ -238,13 +236,10 @@ class SkyhookUnderAttack(NotificationPing):
         if self._data['allianceName']:
             attacking_alli = self._data['allianceName']
 
-        attackerStr = "*[%s](https://zkillboard.com/search/%s/)*, [%s](https://zkillboard.com/search/%s/), **[%s](https://zkillboard.com/search/%s/)**" % \
-            (attacking_char.name,
-             attacking_char.name.replace(" ", "%20"),
-             attacking_corp,
-             attacking_corp.replace(" ", "%20"),
-             attacking_alli if attacking_alli else "*-*",
-             attacking_alli.replace(" ", "%20") if attacking_alli else "")
+        attackerStr = "%s, %s, %s" % \
+            (f"*[{attacking_char.name}]({zkillboard.character_url(attacking_char.eve_id)})*",
+            f"[{attacking_corp.name}]({zkillboard.corporation_url(attacking_corp.eve_id)})",
+            f"**[{attacking_alli.name}]({zkillboard.alliance_url(attacking_alli.eve_id)})**" if attacking_alli else "")
 
         fields = [{'name': 'System/Planet', 'value': system_name, 'inline': True},
                   {'name': 'Region', 'value': region_name, 'inline': True},
@@ -293,7 +288,7 @@ class SkyhookLostShields(NotificationPing):
 
         system_name = system_db.name
         planet_name = planet_db.name
-        system_name = f"[{planet_name}](http://evemaps.dotlan.net/system/{system_name.replace(' ', '_')})"
+        system_name = f"[{planet_name}]({dotlan.solar_system_url(system_name)})"
         structure_type, _ = ctm.EveItemType.objects.get_or_create_from_esi(
             self._data['typeID'])
 
@@ -307,10 +302,10 @@ class SkyhookLostShields(NotificationPing):
 
         corp_id = self._notification.character.character.corporation_id
         corp_ticker = self._notification.character.character.corporation_ticker
-        corp_name = "[%s](https://zkillboard.com/search/%s/)" % \
+        corp_name = "[%s](%s)" % \
             (self._notification.character.character.corporation_name,
-             self._notification.character.character.corporation_name.replace(" ", "%20"))
-        footer = {"icon_url": "https://imageserver.eveonline.com/Corporation/%s_64.png" % (str(corp_id)),
+             zkillboard.corporation_url(corp_id))
+        footer = {"icon_url": eveimageserver.corporation_logo_url(corp_id, 64),
                   "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
 
         fields = [{'name': 'System', 'value': system_name, 'inline': True},
@@ -375,8 +370,8 @@ class SkyhookOnline(NotificationPing):
         region_name = system_db.constellation.region.name
         planet_name = planet_db.name
 
-        system_name = f"[{planet_name}](http://evemaps.dotlan.net/system/{system_name.replace(' ', '_')})"
-        region_name = f"[{region_name}](http://evemaps.dotlan.net/region/{region_name.replace(' ', '_')})"
+        system_name = f"[{planet_name}]({dotlan.solar_system_url(system_name)})"
+        region_name = f"[{region_name}]({dotlan.region_url(region_name)})"
 
         structure_type, _ = ctm.EveItemType.objects.get_or_create_from_esi(
             self._data['typeID'])
@@ -391,7 +386,7 @@ class SkyhookOnline(NotificationPing):
         corp_id = self._notification.character.character.corporation_id
         corp_ticker = self._notification.character.character.corporation_ticker
         footer = {
-            "icon_url": "https://imageserver.eveonline.com/Corporation/%s_64.png" % (str(corp_id)),
+            "icon_url": eveimageserver.corporation_logo_url(corp_id, 64),
             "text": f"{self._notification.character.character.corporation_name} ({corp_ticker})"
         }
 
@@ -449,8 +444,8 @@ class SkyhookDeployed(NotificationPing):
         region_name = system_db.constellation.region.name
         planet_name = planet_db.name
 
-        system_name = f"[{planet_name}](http://evemaps.dotlan.net/system/{system_name.replace(' ', '_')})"
-        region_name = f"[{region_name}](http://evemaps.dotlan.net/region/{region_name.replace(' ', '_')})"
+        system_name = f"[{planet_name}]({dotlan.solar_system_url(system_name)})"
+        region_name = f"[{region_name}]({dotlan.region_url(region_name)})"
 
         structure_type, _ = ctm.EveItemType.objects.get_or_create_from_esi(
             self._data['typeID'])
@@ -465,7 +460,7 @@ class SkyhookDeployed(NotificationPing):
         corp_id = self._notification.character.character.corporation_id
         corp_ticker = self._notification.character.character.corporation_ticker
         footer = {
-            "icon_url": "https://imageserver.eveonline.com/Corporation/%s_64.png" % (str(corp_id)),
+            "icon_url": eveimageserver.corporation_logo_url(corp_id, 64),
             "text": f"{self._notification.character.character.corporation_name} ({corp_ticker})"
         }
 
@@ -529,8 +524,8 @@ class MercenaryDenAttacked(NotificationPing):
         region_name = system_db.constellation.region.name
         planet_name = planet_db.name
 
-        system_name = f"[{planet_name}](http://evemaps.dotlan.net/system/{system_name.replace(' ', '_')})"
-        region_name = f"[{region_name}](http://evemaps.dotlan.net/region/{region_name.replace(' ', '_')})"
+        system_name = f"[{planet_name}]({dotlan.solar_system_url(system_name)})"
+        region_name = f"[{region_name}]({dotlan.region_url(region_name)})"
 
         structure_type, _ = ctm.EveItemType.objects.get_or_create_from_esi(
             self._data['typeID'])
@@ -545,19 +540,19 @@ class MercenaryDenAttacked(NotificationPing):
 
         corp_id = self._notification.character.character.corporation_id
         corp_ticker = self._notification.character.character.corporation_ticker
-        corp_name = "[%s](https://zkillboard.com/search/%s/)" % \
+        corp_name = "[%s](%s)" % \
             (self._notification.character.character.corporation_name,
-             self._notification.character.character.corporation_name.replace(" ", "%20"))
-        footer = {"icon_url": "https://imageserver.eveonline.com/Corporation/%s_64.png" % (str(corp_id)),
+             zkillboard.corporation_url(corp_id))
+        footer = {"icon_url": eveimageserver.corporation_logo_url(corp_id, 64),
                   "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
 
         attacking_char, _ = ctm.EveName.objects.get_or_create_from_esi(
             self._data['aggressorCharacterID'])
 
-        attackerStr = "[%s](https://zkillboard.com/character/%s/)" % \
+        attackerStr = "[%s](%s)" % \
             (
                 attacking_char.name,
-                attacking_char.eve_id
+                zkillboard.character_url(attacking_char.eve_id)
             )
 
         fields = [{'name': 'System/Planet', 'value': system_name, 'inline': True},
@@ -612,8 +607,8 @@ class MercenaryDenReinforced(NotificationPing):
         region_name = system_db.constellation.region.name
         planet_name = planet_db.name
 
-        system_name = f"[{planet_name}](http://evemaps.dotlan.net/system/{system_name.replace(' ', '_')})"
-        region_name = f"[{region_name}](http://evemaps.dotlan.net/region/{region_name.replace(' ', '_')})"
+        system_name = f"[{planet_name}]({dotlan.solar_system_url(system_name)})"
+        region_name = f"[{region_name}]({dotlan.region_url(region_name)})"
 
         structure_type, _ = ctm.EveItemType.objects.get_or_create_from_esi(
             self._data['typeID'])
@@ -628,10 +623,10 @@ class MercenaryDenReinforced(NotificationPing):
 
         corp_id = self._notification.character.character.corporation_id
         corp_ticker = self._notification.character.character.corporation_ticker
-        corp_name = "[%s](https://zkillboard.com/search/%s/)" % \
+        corp_name = "[%s](%s)" % \
             (self._notification.character.character.corporation_name,
-             self._notification.character.character.corporation_name.replace(" ", "%20"))
-        footer = {"icon_url": "https://imageserver.eveonline.com/Corporation/%s_64.png" % (str(corp_id)),
+             zkillboard.corporation_url(corp_id))
+        footer = {"icon_url": eveimageserver.corporation_logo_url(corp_id, 64),
                   "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
 
         fields = [{'name': 'System/Planet', 'value': system_name, 'inline': True},

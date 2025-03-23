@@ -7,6 +7,8 @@ from django.utils.html import strip_tags
 from .base import NotificationPing
 from .helpers import filetime_to_dt
 
+from allianceauth.eveonline.evelinks import dotlan, eveimageserver
+
 logger = logging.getLogger(__name__)
 
 
@@ -36,7 +38,7 @@ class MoonminingExtractionFinished(NotificationPing):
             system_id=self._data['solarSystemID'])
 
         system_name = system_db.name
-        system_name = f"[{system_name}](http://evemaps.dotlan.net/system/{system_name.replace(' ', '_')})"
+        system_name = f"[{system_name}]({dotlan.solar_system_url(system_name)})"
 
         structure_type, _ = ctm.EveItemType.objects.get_or_create_from_esi(
             self._data['structureTypeID'])
@@ -54,7 +56,7 @@ class MoonminingExtractionFinished(NotificationPing):
         corp_id = self._notification.character.character.corporation_id
         corp_ticker = self._notification.character.character.corporation_ticker
 
-        footer = {"icon_url": "https://imageserver.eveonline.com/Corporation/%s_64.png" % (str(corp_id)),
+        footer = {"icon_url": eveimageserver.corporation_logo_url(corp_id, 64),
                   "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
 
         auto_time = filetime_to_dt(self._data['autoTime'])
@@ -118,7 +120,7 @@ class MoonminingAutomaticFracture(NotificationPing):
             system_id=self._data['solarSystemID'])
 
         system_name = system_db.name
-        system_name = f"[{system_name}](http://evemaps.dotlan.net/system/{system_name.replace(' ', '_')})"
+        system_name = f"[{system_name}]({dotlan.solar_system_url(system_name)})"
 
         structure_type, _ = ctm.EveItemType.objects.get_or_create_from_esi(
             self._data['structureTypeID'])
@@ -136,7 +138,7 @@ class MoonminingAutomaticFracture(NotificationPing):
         corp_id = self._notification.character.character.corporation_id
         corp_ticker = self._notification.character.character.corporation_ticker
 
-        footer = {"icon_url": "https://imageserver.eveonline.com/Corporation/%s_64.png" % (str(corp_id)),
+        footer = {"icon_url": eveimageserver.corporation_logo_url(corp_id, 64),
                   "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
 
         ores = {}
@@ -199,7 +201,7 @@ class MoonminingLaserFired(NotificationPing):
             system_id=self._data['solarSystemID'])
 
         system_name = system_db.name
-        system_name = f"[{system_name}](http://evemaps.dotlan.net/system/{system_name.replace(' ', '_')})"
+        system_name = f"[{system_name}]({dotlan.solar_system_url(system_name)})"
 
         structure_type, _ = ctm.EveItemType.objects.get_or_create_from_esi(
             self._data['structureTypeID'])
@@ -219,7 +221,7 @@ class MoonminingLaserFired(NotificationPing):
         corp_id = self._notification.character.character.corporation_id
         corp_ticker = self._notification.character.character.corporation_ticker
 
-        footer = {"icon_url": "https://imageserver.eveonline.com/Corporation/%s_64.png" % (str(corp_id)),
+        footer = {"icon_url": eveimageserver.corporation_logo_url(corp_id, 64),
                   "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
 
         ores = {}
@@ -284,7 +286,7 @@ class MoonminingExtractionStarted(NotificationPing):
             system_id=self._data['solarSystemID'])
 
         system_name = system_db.name
-        system_name = f"[{system_name}](http://evemaps.dotlan.net/system/{system_name.replace(' ', '_')})"
+        system_name = f"[{system_name}]({dotlan.solar_system_url(system_name)})"
 
         structure_type, _ = ctm.EveItemType.objects.get_or_create_from_esi(
             self._data['structureTypeID'])
@@ -304,7 +306,7 @@ class MoonminingExtractionStarted(NotificationPing):
         corp_id = self._notification.character.character.corporation_id
         corp_ticker = self._notification.character.character.corporation_ticker
 
-        footer = {"icon_url": "https://imageserver.eveonline.com/Corporation/%s_64.png" % (str(corp_id)),
+        footer = {"icon_url": eveimageserver.corporation_logo_url(corp_id, 64),
                   "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
 
         auto_time = filetime_to_dt(self._data['autoTime'])

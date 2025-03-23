@@ -87,10 +87,10 @@ class CorpAppInvitedMsg(NotificationPing):
 
         corp_id = self._notification.character.character.corporation_id
         corp_ticker = self._notification.character.character.corporation_ticker
-        corp_name = "[%s](https://zkillboard.com/search/%s/)" % \
+        corp_name = "[%s](%s)" % \
             (self._notification.character.character.corporation_name,
-             self._notification.character.character.corporation_name.replace(" ", "%20"))
-        footer = {"icon_url": "https://imageserver.eveonline.com/Corporation/%s_64.png" % (str(corp_id)),
+             zkillboard.corporation_url(corp_id))
+        footer = {"icon_url": eveimageserver.corporation_logo_url(corp_id, 64),
                   "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
 
         fields = [{'name': 'Character', 'value': f"[{app_char}]({evewho.character_url(app_char.eve_id)})", 'inline': True},
@@ -137,10 +137,10 @@ class CorpAppNewMsg(NotificationPing):
 
         corp_id = self._notification.character.character.corporation_id
         corp_ticker = self._notification.character.character.corporation_ticker
-        corp_name = "[%s](https://zkillboard.com/search/%s/)" % \
+        corp_name = "[%s](%s)" % \
             (self._notification.character.character.corporation_name,
-             self._notification.character.character.corporation_name.replace(" ", "%20"))
-        footer = {"icon_url": "https://imageserver.eveonline.com/Corporation/%s_64.png" % (str(corp_id)),
+             zkillboard.corporation_url(corp_id))
+        footer = {"icon_url": eveimageserver.corporation_logo_url(corp_id, 64),
                   "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
 
         fields = [{'name': 'Character', 'value': f"[{app_char}]({evewho.character_url(app_char.eve_id)})", 'inline': True},
@@ -184,10 +184,10 @@ class CorpAppRejectMsg(NotificationPing):
 
         corp_id = self._notification.character.character.corporation_id
         corp_ticker = self._notification.character.character.corporation_ticker
-        corp_name = "[%s](https://zkillboard.com/search/%s/)" % \
+        corp_name = "[%s](%s)" % \
             (self._notification.character.character.corporation_name,
-             self._notification.character.character.corporation_name.replace(" ", "%20"))
-        footer = {"icon_url": "https://imageserver.eveonline.com/Corporation/%s_64.png" % (str(corp_id)),
+             zkillboard.corporation_url(corp_id))
+        footer = {"icon_url": eveimageserver.corporation_logo_url(corp_id, 64),
                   "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
 
         fields = [{'name': 'Character', 'value': f"[{app_char}]({evewho.character_url(app_char.eve_id)})", 'inline': True},

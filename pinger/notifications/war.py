@@ -1,3 +1,4 @@
+from allianceauth.eveonline.evelinks import eveimageserver
 from corptools import models as ctm
 from django.utils.html import strip_tags
 
@@ -34,7 +35,7 @@ class WarDeclared(NotificationPing):
 
         corp_id = self._notification.character.character.corporation_id
         corp_ticker = self._notification.character.character.corporation_ticker
-        footer = {"icon_url": "https://imageserver.eveonline.com/Corporation/%s_64.png" % (str(corp_id)),
+        footer = {"icon_url": eveimageserver.corporation_logo_url(corp_id, 64),
                   "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
 
         self.package_ping(title,

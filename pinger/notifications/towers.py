@@ -1,6 +1,7 @@
 
 import time
 
+from allianceauth.eveonline.evelinks import dotlan, eveimageserver, zkillboard
 from corptools import models as ctm
 
 from ..exceptions import MutedException
@@ -44,8 +45,8 @@ class TowerAlertMsg(NotificationPing):
         system_name = system_db.name
         region_name = system_db.constellation.region.name
 
-        system_name = f"[{system_name}](http://evemaps.dotlan.net/system/{system_name.replace(' ', '_')})"
-        region_name = f"[{region_name}](http://evemaps.dotlan.net/region/{region_name.replace(' ', '_')})"
+        system_name = f"[{system_name}]({dotlan.solar_system_url(system_name)})"
+        region_name = f"[{region_name}]({dotlan.region_url(region_name)})"
 
         moon, _ = ctm.MapSystemMoon.objects.get_or_create_from_esi(
             self._data['moonID'])
@@ -62,10 +63,10 @@ class TowerAlertMsg(NotificationPing):
 
         corp_id = self._notification.character.character.corporation_id
         corp_ticker = self._notification.character.character.corporation_ticker
-        corp_name = "[%s](https://zkillboard.com/search/%s/)" % \
+        corp_name = "[%s](%s)" % \
             (self._notification.character.character.corporation_name,
-             self._notification.character.character.corporation_name.replace(" ", "%20"))
-        footer = {"icon_url": "https://imageserver.eveonline.com/Corporation/%s_64.png" % (str(corp_id)),
+             zkillboard.corporation_url(corp_id))
+        footer = {"icon_url": eveimageserver.corporation_logo_url(corp_id, 64),
                   "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
 
         attackerStr = "Unknown"
@@ -75,18 +76,17 @@ class TowerAlertMsg(NotificationPing):
             attacking_char_corp, _ = ctm.EveName.objects.get_or_create_from_esi(
                 self._data['aggressorCorpID'])
             attacking_alliance_name = ""
+            attacking_alliance_id = None
             if self._data.get('aggressorAllianceID', False):
                 attacking_char_alliance, _ = ctm.EveName.objects.get_or_create_from_esi(
                     self._data['aggressorAllianceID'])
                 attacking_alliance_name = attacking_char_alliance.name
+                attacking_alliance_id = attacking_char_alliance.eve_id
 
-            attackerStr = "*[%s](https://zkillboard.com/search/%s/)*, [%s](https://zkillboard.com/search/%s/), **[%s](https://zkillboard.com/search/%s/)**" % \
-                (attacking_char.name,
-                 attacking_char.name.replace(" ", "%20"),
-                 attacking_char_corp.name,
-                 attacking_char_corp.name.replace(" ", "%20"),
-                 attacking_alliance_name,
-                 attacking_alliance_name.replace(" ", "%20"))
+            attackerStr = "%s, %s, %s" % \
+                          (f"*[{attacking_char.name}]({zkillboard.character_url(attacking_char.eve_id)})*",
+                          f"[{attacking_char_corp.name}]({zkillboard.corporation_url(attacking_char_corp.eve_id)})",
+                          f"**[{attacking_alliance_name}]({zkillboard.alliance_url(attacking_alliance_id)})**" if attacking_alliance_id else "")
 
         fields = [{'name': 'Moon', 'value': moon.name, 'inline': True},
                   {'name': 'System', 'value': system_name, 'inline': True},
