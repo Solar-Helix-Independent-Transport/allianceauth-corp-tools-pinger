@@ -53,23 +53,23 @@ class PingerTests(CorptoolsTestCase):
             cls.dateTime1Timestamp
         ).replace(tzinfo=datetime.timezone.utc)
         cls.dateTime1String = cls.dateTime1.strftime("%Y-%m-%d %H:%M")
-        cls.corp1t = "[%s](https://zkillboard.com/search/%s/)" % (
+        cls.corp1t = "[%s](https://zkillboard.com/corporation/%s/)" % (
             cls.corp1.corporation_name,
-            cls.corp1.corporation_name.replace(" ", "%20")
+            cls.corp1.corporation_id
         )
 
         cls.region = MapRegion.objects.create(
             region_id=1,
             name="Region 1"
         )
-        cls.r1t = f"[Region 1](http://evemaps.dotlan.net/region/Region_1)"
+        cls.r1t = f"[Region 1](https://evemaps.dotlan.net/map/Region_1)"
 
         cls.constellation = MapConstellation.objects.create(
             constellation_id=1,
             name="Constellation 1",
             region=cls.region
         )
-        cls.c1t = f"[Constellation 1](http://evemaps.dotlan.net/constellation/Constellation_1)"
+        cls.c1t = f"[Constellation 1](https://evemaps.dotlan.net/constellation/Constellation_1)"
 
         cls.system = MapSystem.objects.create(
             system_id=1,
@@ -80,7 +80,7 @@ class PingerTests(CorptoolsTestCase):
             z=0,
             constellation=cls.constellation
         )
-        cls.s1t = f"[System 1](http://evemaps.dotlan.net/system/System_1)"
+        cls.s1t = f"[System 1](https://evemaps.dotlan.net/system/System_1)"
 
         cls.planet = MapSystemPlanet.objects.create(
             planet_id=1,
@@ -90,7 +90,7 @@ class PingerTests(CorptoolsTestCase):
             z=0,
             system=cls.system
         )
-        cls.p1t = f"[Planet 1](http://evemaps.dotlan.net/system/System_1)"
+        cls.p1t = f"[Planet 1](https://evemaps.dotlan.net/system/System_1)"
 
     def _build_notification(self, notification_type, notificaiton_text):
 
