@@ -285,8 +285,8 @@ class StructureUnderAttack(NotificationPing):
         attackerStr = "%s%s%s" % \
             (
                 f"*[{attacking_char.name}]({zkillboard.character_url(attacking_char.eve_id)})*",
-                f", [{attacking_char.corporation.name}]({zkillboard.corporation_url(attacking_char.corporation_id)})",
-                f", **[{attacking_char.alliance.name}]({zkillboard.alliance_url(attacking_char.alliance_id)})**" if attacking_char.alliance_id else "",
+                f", [{attacking_char.corporation.name}]({zkillboard.corporation_url(attacking_char.corporation.eve_id)})",
+                f", **[{attacking_char.alliance.name}]({zkillboard.alliance_url(attacking_char.alliance.eve_id)})**" if attacking_char.alliance else "",
             )
 
         fields = [{'name': 'System', 'value': system_name, 'inline': True},
