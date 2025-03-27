@@ -62,7 +62,7 @@ class PingerTests(CorptoolsTestCase):
             region_id=1,
             name="Region 1"
         )
-        cls.r1t = f"[Region 1](https://evemaps.dotlan.net/region/Region_1)"
+        cls.r1t = f"[Region 1](https://evemaps.dotlan.net/map/Region_1)"
 
         cls.constellation = MapConstellation.objects.create(
             constellation_id=1,
