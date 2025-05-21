@@ -767,6 +767,7 @@ class Notification:
 @shared_task(bind=True, base=QueueOnce)
 def process_notifications(self, cid, notifs):
     char = CharacterAudit.objects.get(character__character_id=cid)
+    logger.info(f"PINGER: {char.character.corporation_id} {cid} process_notifications: {notifs}")
     new_notifs = []
     CUTTOFF = timezone.now() - datetime.timedelta(hours=LOOK_BACK_HOURS)
 
@@ -777,8 +778,8 @@ def process_notifications(self, cid, notifs):
         if note.get('timestamp') > CUTTOFF:
             if note.get('type').startswith("unknown"):
                 logger.info(
-                    f"PINGER: {char} Got Notification {note.get('notification_id')} {note.get('type')} {note.get('timestamp')}\n\n{note.get('text')}")
-
+                    f"PINGER: {char.character.corporation_id} {cid} Got Notification {note.get('notification_id')} {note.get('type')} {note.get('timestamp')}\n\n{note.get('text')}")
+            logger.info(f"PINGER: {char.character.corporation_id} {cid} Found: {note}")
             n = Notification(character=char,
                              notification_id=note.get(
                                  'notification_id'),
@@ -796,6 +797,7 @@ def process_notifications(self, cid, notifs):
     # parse them into the parsers
     for n in new_notifs:
         if n.notification_id not in pinged_already:
+            logger.info(f"PINGER: {char.character.corporation_id} {cid} Processing: {note}")
             pinged_already.add(n.notification_id)
             try:
                 _t = n.notification_type.replace(
@@ -805,8 +807,10 @@ def process_notifications(self, cid, notifs):
                     pings[_t] = []
                 pings[_t].append(note)
             except notifications.MutedException:
+                logger.warning(f"PINGER: {char.character.corporation_id} MUTED: {note}")
                 pass
 
+    logger.info(f"PINGER: {char.character.corporation_id} {cid} Sending {len(pings.keys())} pings")
     # send them to webhooks as needed
     for k, l in pings.items():
         webhooks = DiscordWebhook.objects.filter(ping_types__class_tag=k)\
@@ -823,18 +827,18 @@ def process_notifications(self, cid, notifs):
 
                 if corp_filter is not None and len(corporations) > 0:
                     if corp_filter not in corporations:
-                        logging.info(f"PINGER: ignroing Ping {p} corp filter")
+                        logging.info(f"PINGER: {char.character.corporation_id} {cid} ignroing Ping {p} corp filter")
                         continue
 
                 if alli_filter is not None and len(alliances) > 0:
                     if alli_filter not in alliances:
-                        logging.info(f"PINGER: ignroing Ping {p} alli filter")
+                        logging.info(f"PINGER: {char.character.corporation_id} {cid} ignroing Ping {p} alli filter")
                         continue
 
                 if region_filter is not None and len(regions) > 0:
                     if region_filter not in regions:
                         logging.info(
-                            f"PINGER: ignroing Ping {p} region filter")
+                            f"PINGER: {char.character.corporation_id} {cid} ignroing Ping {p} region filter")
                         continue
 
                 ping_ob = Ping.objects.create(
@@ -844,13 +848,13 @@ def process_notifications(self, cid, notifs):
                     hook=hook,
                     alerting=p.force_at_ping
                 )
-                logging.info(f"PINGER: Sending Ping {ping_ob}")
+                logging.info(f"PINGER: {char.character.corporation_id} {cid} Sending Ping {ping_ob}")
                 ping_ob.send_ping()
                 try:
                     if p.timer:
                         p.timer.save()
                 except Exception:
-                    logger.exception("PINGER: Faiiled to add Timer...")
+                    logger.exception(f"PINGER: {char.character.corporation_id} {cid} Faiiled to add Timer... {ping_ob}")
 
 
 def _build_wh_cache_key(wh_id):
