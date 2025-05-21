@@ -733,7 +733,7 @@ def corporation_notification_update(self, corporation_id):
         try:
             process_notifications.apply_async(
                 priority=TASK_PRIO,
-                args=[character_id, pingable_notifs]
+                args=[character_id, pingable_notifs],
                 once={'graceful': False}
             )
         except Exception as e:
