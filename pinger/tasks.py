@@ -566,7 +566,7 @@ def corporation_gas_check(self, corporation_id):
                 if corp_filter is not None and len(corporations) > 0:
                     if corp_filter not in corporations:
                         logger.info(
-                            f"PINGER: FUEL  Skipped {self.structure.name} Corp {corp_filter} not in {corporations}"
+                            f"PINGER: FUEL  Skipped Corp_ID:{corp_filter} not in {corporations}"
                         )
                         continue
 
