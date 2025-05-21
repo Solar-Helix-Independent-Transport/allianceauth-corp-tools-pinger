@@ -53,16 +53,16 @@ class PingerTests(CorptoolsTestCase):
             cls.dateTime1Timestamp
         ).replace(tzinfo=datetime.timezone.utc)
         cls.dateTime1String = cls.dateTime1.strftime("%Y-%m-%d %H:%M")
-        cls.corp1t = "[%s](https://zkillboard.com/search/%s/)" % (
+        cls.corp1t = "[%s](https://zkillboard.com/corporation/%s/)" % (
             cls.corp1.corporation_name,
-            cls.corp1.corporation_name.replace(" ", "%20")
+            cls.corp1.corporation_id
         )
 
         cls.region = MapRegion.objects.create(
             region_id=1,
             name="Region 1"
         )
-        cls.r1t = f"[Region 1](https://evemaps.dotlan.net/region/Region_1)"
+        cls.r1t = f"[Region 1](https://evemaps.dotlan.net/map/Region_1)"
 
         cls.constellation = MapConstellation.objects.create(
             constellation_id=1,
