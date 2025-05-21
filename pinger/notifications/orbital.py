@@ -228,23 +228,24 @@ class SkyhookUnderAttack(NotificationPing):
         footer = {"icon_url": eveimageserver.corporation_logo_url(corp_id, 64),
                   "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
 
-        attacking_char, _ = ctm.EveName.objects.get_or_create_from_esi(
-            self._data['charID'])
-        attacking_corp = self._data['corpName']
+        # attacking_char, _ = ctm.EveName.objects.get_or_create_from_esi(
+        #     self._data['charID'])
+        # attacking_corp = ctm.EveName.objects.get_or_create_from_esi(
+        #     self._data['corpLinkData'][2])
 
-        attacking_alli = None
-        if self._data['allianceName']:
-            attacking_alli = self._data['allianceName']
+        # attacking_alli = None
+        # if self._data['allianceName']:
+        #     attacking_alli = self._data['allianceName']
 
-        attackerStr = "%s, %s, %s" % \
-            (f"*[{attacking_char.name}]({zkillboard.character_url(attacking_char.eve_id)})*",
-            f"[{attacking_corp.name}]({zkillboard.corporation_url(attacking_corp.eve_id)})",
-            f"**[{attacking_alli.name}]({zkillboard.alliance_url(attacking_alli.eve_id)})**" if attacking_alli else "")
+        # attackerStr = "%s, %s, %s" % \
+        #     (f"*[{attacking_char.name}]({zkillboard.character_url(attacking_char.eve_id)})*",
+        #     f"[{attacking_corp.name}]({zkillboard.corporation_url(attacking_corp.eve_id)})",
+        #     f"**[{attacking_alli.name}]({zkillboard.alliance_url(attacking_alli.eve_id)})**" if attacking_alli else "")
 
         fields = [{'name': 'System/Planet', 'value': system_name, 'inline': True},
                   {'name': 'Region', 'value': region_name, 'inline': True},
-                  {'name': 'Type', 'value': structure_type.name, 'inline': True},
-                  {'name': 'Attacker', 'value': attackerStr, 'inline': False}]
+                  {'name': 'Type', 'value': structure_type.name, 'inline': True}]
+                  # {'name': 'Attacker', 'value': attackerStr, 'inline': False}]
 
         self.package_ping(title,
                           body,
