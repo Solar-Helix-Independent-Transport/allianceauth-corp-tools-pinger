@@ -730,8 +730,14 @@ def corporation_notification_update(self, corporation_id):
             f"PINGER: {corporation_id} Pings to process: {len(pingable_notifs)}")
 
         # did we get any?
-        process_notifications.apply_async(priority=TASK_PRIO, args=[
-                                          character_id, pingable_notifs])
+        try:
+            process_notifications.apply_async(
+                priority=TASK_PRIO,
+                args=[character_id, pingable_notifs]
+                once={'graceful': False}
+            )
+        except Exception as e:
+            logger.exception(f"PINGER: {corporation_id} Already Queued process_notifications - {e}")
 
         _, _, min_delay = get_settings()
 
