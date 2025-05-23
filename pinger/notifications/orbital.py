@@ -146,13 +146,13 @@ class OrbitalReinforced(NotificationPing):
 
         if timers_enabled():
             try:
-                from allianceauth.timerboard.models import TimerType
+                from allianceauth.timerboard.models import Timer
 
                 self.timer = create_timer(
                     f"{planet_name} POCO",
                     structure_type.name,
                     system_db.name,
-                    TimerType.ARMOR,
+                    Timer.TimerType.ARMOR,
                     _timeTill,
                     self._notification.character.character.corporation
                 )
@@ -324,19 +324,19 @@ class SkyhookLostShields(NotificationPing):
 
         if timers_enabled():
             try:
-                from allianceauth.timerboard.models import TimerType
+                from allianceauth.timerboard.models import Timer
 
                 self.timer = create_timer(
-                    f"{planet_name} POCO",
+                    f"{planet_name} Skyhook",
                     structure_type.name,
                     system_db.name,
-                    TimerType.ARMOR,
+                    Timer.TimerType.ARMOR,
                     _timeTill,
                     self._notification.character.character.corporation
                 )
             except Exception as e:
                 logger.exception(
-                    f"PINGER: Failed to build timer OrbitalReinforced {e}")
+                    f"PINGER: Failed to build timer SkyhookLostShields {e}")
 
         self._corp = self._notification.character.character.corporation_id
         self._alli = self._notification.character.character.alliance_id
@@ -646,13 +646,13 @@ class MercenaryDenReinforced(NotificationPing):
 
         if timers_enabled():
             try:
-                from allianceauth.timerboard.models import TimerType
+                from allianceauth.timerboard.models import Timer
 
                 self.timer = create_timer(
                     f"{planet_name} Merc Den",
                     structure_type.name,
                     system_db.name,
-                    TimerType.ARMOR,
+                    Timer.TimerType.ARMOR,
                     _timeTill,
                     self._notification.character.character.corporation
                 )
