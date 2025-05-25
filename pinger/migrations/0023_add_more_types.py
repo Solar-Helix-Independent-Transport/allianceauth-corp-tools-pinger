@@ -12,7 +12,7 @@ def add_ping_types(apps, schema_editor):
     PingType.objects.create(name="Orbitals: Skyhook Online",
                             class_tag="SkyhookOnline")
 
-    PingType.objects.create(name="Orbitals: Skyhook Online",
+    PingType.objects.create(name="Orbitals: Skyhook Deployed",
                             class_tag="SkyhookDeployed")
 
 
