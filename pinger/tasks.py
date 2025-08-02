@@ -9,7 +9,6 @@ from http.cookiejar import http2time
 import requests
 from bravado.exception import HTTPError
 from celery import shared_task
-from allianceauth.eveonline.evelinks import eveimageserver
 from corptools.models import (
     CharacterAudit, CorpAsset, CorporationAudit, Structure,
 )
@@ -21,6 +20,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Max, Q, Sum
 from django.utils import timezone
 
+from allianceauth.eveonline.evelinks import eveimageserver
 from allianceauth.services.tasks import QueueOnce
 from esi.models import Token
 
@@ -737,7 +737,7 @@ def corporation_notification_update(self, corporation_id):
                 once={'graceful': False}
             )
         except Exception as e:
-            logger.exception(f"PINGER: {corporation_id} Already Queued process_notifications - {e}")
+            logger.warning(f"PINGER: {corporation_id} Already Queued process_notifications - {e}")
 
         _, _, min_delay = get_settings()
 
