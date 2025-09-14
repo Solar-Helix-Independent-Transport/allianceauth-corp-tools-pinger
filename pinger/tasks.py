@@ -647,8 +647,14 @@ def corporation_notification_update(self, corporation_id):
         token = Token.get_token(character_id, req_scopes)
 
         if not token:
+            _set_cache_data_for_corp(
+                corporation_id,
+                character_id,
+                all_chars_in_corp,
+                30
+            )
+            logger.error(f"PINGER: {corporation_id} - {character_id} has no tokens, retrying in 30s with next char.")
             self.retry(countdown=30)
-            logger.error(f"{character_id} has no tokens, retrying in 30s")
 
         try:
             access_token = token.valid_access_token()
