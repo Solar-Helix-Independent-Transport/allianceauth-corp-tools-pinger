@@ -2,9 +2,10 @@ import datetime
 import logging
 import time
 
-from allianceauth.eveonline.evelinks import dotlan, eveimageserver, zkillboard
 from corptools import models as ctm
 from corptools.task_helpers.update_tasks import fetch_location_name
+
+from allianceauth.eveonline.evelinks import dotlan, eveimageserver, zkillboard
 
 from ..exceptions import MutedException
 from ..models import MutedStructure
@@ -285,7 +286,7 @@ class StructureUnderAttack(NotificationPing):
         attackerStr = "%s%s%s" % \
             (
                 f"*[{attacking_char.name}]({zkillboard.character_url(attacking_char.eve_id)})*",
-                f", [{attacking_char.corporation.name}]({zkillboard.corporation_url(attacking_char.corporation.eve_id)})",
+                f", [{attacking_char.corporation.name}]({zkillboard.corporation_url(attacking_char.corporation.eve_id)})" if attacking_char.corporation else "",
                 f", **[{attacking_char.alliance.name}]({zkillboard.alliance_url(attacking_char.alliance.eve_id)})**" if attacking_char.alliance else "",
             )
 

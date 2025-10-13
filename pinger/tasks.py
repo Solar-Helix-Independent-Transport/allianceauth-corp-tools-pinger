@@ -604,10 +604,6 @@ def corporation_notification_update(self, corporation_id):
                                                               character__corporation_id=corporation_id,
                                                               active=True).values_list("character__character_id", flat=True)))
 
-        all_hr_chars = list(set(CharacterAudit.objects.filter(characterroles__personnel_manager=True,
-                                                              character__corporation_id=corporation_id,
-                                                              active=True).values_list("character__character_id", flat=True)))
-
         # todo make this nicer...
         if len(all_hr_chars) > 0:
             hr_presented = False
