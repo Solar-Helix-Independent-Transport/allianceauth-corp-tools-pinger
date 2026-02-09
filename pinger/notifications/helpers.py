@@ -1,7 +1,6 @@
 import datetime
 import logging
 
-from allianceauth.timerboard.models import Timer
 from django.apps import apps
 
 logger = logging.getLogger(__name__)
@@ -11,7 +10,7 @@ def timers_enabled():
     return apps.is_installed("allianceauth.timerboard")
 
 
-if timers_enabled():  # NOQA
+if timers_enabled():
     from allianceauth.timerboard.models import Timer
 
 
