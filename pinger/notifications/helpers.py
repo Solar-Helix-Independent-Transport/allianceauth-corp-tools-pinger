@@ -49,11 +49,12 @@ def time_till_to_dt(ms, timestamp):
 
 def create_timer(structure, structure_type, system, timer_type, date, corporation):
     # Pre process??? add anything new???
-    return Timer(
-        details=f"{structure} (Auto)",
-        system=system,
-        structure=structure_type,
-        timer_type=timer_type,
-        eve_time=date,
-        eve_corp=corporation,
-    )
+    if timers_enabled():
+        return Timer(
+            details=f"{structure} (Auto)",
+            system=system,
+            structure=structure_type,
+            timer_type=timer_type,
+            eve_time=date,
+            eve_corp=corporation,
+        )
