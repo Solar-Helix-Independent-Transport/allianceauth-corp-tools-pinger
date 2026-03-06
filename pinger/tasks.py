@@ -29,7 +29,7 @@ from pinger.models import DiscordWebhook, FuelPingRecord, Ping, PingerConfig
 
 from . import notifications
 from .notifications.base import get_available_types
-from .providers import cache_client, esi
+from .providers import cache_client, esi_openapi
 
 TZ_STRING = "%Y-%m-%dT%H:%M:%SZ"
 
@@ -653,7 +653,7 @@ def corporation_notification_update(self, corporation_id):
             self.retry(countdown=30)
 
         try:
-            access_token = token.valid_access_token()
+            token.valid_access_token()
         except InvalidGrantError:
             logger.error(
                 f"Invalid Grant on {token}, Deleting {token.character_name}'s token")
@@ -661,34 +661,20 @@ def corporation_notification_update(self, corporation_id):
 
         last_expire = _get_last_cache_expire(character_id)
         _set_cache_data_for_corp(
-            corporation_id, character_id, all_chars_in_corp, 10)
-
-        types = get_available_types()
-        # update notifications for this character inline.
-
-        notifs = esi.client.Character.get_characters_character_id_notifications(
-            character_id=character_id,
-            token=access_token
+            corporation_id,
+            character_id,
+            all_chars_in_corp,
+            10
         )
 
-        # CCPLEASE Why do you make me do this....
-        # I hate this... i am unsure of the possible dangers of allowing invalid data through...
-        # maybe we can make this an option later on or add some kind of admin ping on bad data...
-        # TODO yell in the direction of CCP and find a nicer way to manage this.
-        # notifs.operation.swagger_spec.config["validate_responses"] = False
-        notifs.request_config.also_return_response = True
-        _notifs = []
+        types = get_available_types()
 
-        try:
-            _notifs, response = notifs.results()
-        except Exception as e:
-            raise e
-        finally:
-            # As this is a spec level change i think it needs to be reverted
-            # if it is not all requests stop being validated this is bad...
-            # but for now lets not... see what happens...
-            # notifs.operation.swagger_spec.config["validate_responses"] = False
-            pass
+        _notifs, response = esi_openapi.client.Character.GetCharactersCharacterIdNotifications(
+            character_id=character_id,
+            token=token
+        ).result(
+            also_return_response=True
+        )
 
         now = time.mktime(timezone.now().timetuple())
         next_expire = http2time(response.headers.get('Expires'))
@@ -700,11 +686,16 @@ def corporation_notification_update(self, corporation_id):
             logger.warning(
                 f"PINGER: CACHE: Almost expired cache {token.character_name}, retrying with this character in {secs_till_expire + 1} seconds")
             _set_cache_data_for_corp(
-                corporation_id, last_character, all_chars_in_corp, 0)
+                corporation_id,
+                last_character,
+                all_chars_in_corp,
+                0
+            )
             self.retry(countdown=secs_till_expire + 1)
         elif secs_till_expire < 570:
             logger.warning(
-                f"PINGER: CACHE: Mid cache cycle {token.character_name}, retrying with next character")
+                f"PINGER: CACHE: Mid cache cycle {token.character_name}, retrying with next character"
+            )
             self.retry(countdown=1)
 
         _set_last_cache_expire(character_id, next_expire)
@@ -714,19 +705,20 @@ def corporation_notification_update(self, corporation_id):
             list(Ping.objects.values_list("notification_id", flat=True)))
 
         for n in _notifs:
-            if n.get('timestamp') > CUTTOFF:
-                _t = sanitize_notification_type(n.get('type'))
+            if n.timestamp > CUTTOFF:
+                _t = sanitize_notification_type(n.type)
                 if _t.startswith("unknown"):
                     logger.warning(
                         f"PINGER: {corporation_id} Got Notification "
-                        f"{n.get('notification_id')} {n.get('type')} "
-                        f"{n.get('timestamp')}\n\n{n.get('text')}"
+                        f"{n.notification_id} {n.type} "
+                        f"{n.timestamp}\n\n{n.text}"
                     )
                 if _t in types.keys():
-                    if n.get('notification_id') not in pinged_already:
+                    if n.notification_id not in pinged_already:
                         n['time'] = datetime.datetime.timestamp(
-                            n.get('timestamp'))
-                        pingable_notifs.append(n)
+                            n.timestamp
+                        )
+                        pingable_notifs.append(vars(n))
 
         logger.info(
             f"PINGER: {corporation_id} Pings to process: {len(pingable_notifs)}")

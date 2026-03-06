@@ -6,6 +6,10 @@ from django.utils.html import strip_tags
 from allianceauth.eveonline.evelinks import eveimageserver, evewho, zkillboard
 from allianceauth.eveonline.models import EveCharacter
 
+from pinger.notifications.helpers import (
+    filter_from_notification, footer_from_notification, get_eve_name_by_id,
+)
+
 from .base import NotificationPing
 
 
@@ -22,32 +26,38 @@ class CorporationGoalCreated(NotificationPing):
     """
 
     def build_ping(self):
-        creator, _ = ctm.EveName.objects.get_or_create_from_esi(
-            self._data['creator_id'])
-        app_corp, _ = ctm.EveName.objects.get_or_create_from_esi(
-            self._data['corporation_id'])
+        creator = get_eve_name_by_id(self._data['creator_id'])
+        app_corp = get_eve_name_by_id(self._data['corporation_id'])
+        footer = footer_from_notification(self._notification)
 
         title = "Corp Project Created"
         body = f"```{strip_tags(self._data['goal_name'])}```\n"
 
-        corp_id = app_corp.eve_id
-        corp_name = f"[{app_corp.name}]({zkillboard.corporation_url(corp_id)})"
-        footer = {"icon_url": f"{eveimageserver.corporation_logo_url(corp_id, size=64)}",
-                  "text": f"{app_corp.name}"
-                  }
+        fields = [
+            {
+                'name': 'Creator',
+                'value': f"[{creator}]({evewho.character_url(self._data['creator_id'])})",
+                'inline': True
+            },
+            {
+                'name': 'Corporation',
+                'value': app_corp,
+                'inline': True
+            }
+        ]
 
-        fields = [{'name': 'Creator', 'value': f"[{creator}]({evewho.character_url(creator.eve_id)})", 'inline': True},
-                  {'name': 'Corporation', 'value': corp_name, 'inline': True}]
+        self.package_ping(
+            title,
+            body,
+            self._notification.timestamp,
+            fields=fields,
+            footer=footer,
+            colour=16756480
+        )
 
-        self.package_ping(title,
-                          body,
-                          self._notification.timestamp,
-                          fields=fields,
-                          footer=footer,
-                          colour=16756480)
-
-        self._corp = self._notification.character.character.corporation_id
-        self._alli = self._notification.character.character.alliance_id
+        self._corp, self._alli, self._region = filter_from_notification(
+            self._notification,
+        )
         self.force_at_ping = False
 
 
@@ -65,37 +75,43 @@ class CorporationGoalClosed(NotificationPing):
     """
 
     def build_ping(self):
-        creator, _ = ctm.EveName.objects.get_or_create_from_esi(
-            self._data['creator_id'])
+        creator = get_eve_name_by_id(self._data['creator_id'])
+        app_corp = get_eve_name_by_id(self._data['corporation_id'])
+        footer = footer_from_notification(self._notification)
+
         if "closer_id" in self._data:
-            closer, _ = ctm.EveName.objects.get_or_create_from_esi(
-                self._data['closer_id'])
+            closer = get_eve_name_by_id(self._data['closer_id'])
         else:
             closer = creator
-        app_corp, _ = ctm.EveName.objects.get_or_create_from_esi(
-            self._data['corporation_id'])
 
         title = "Corp Project Closed"
         body = f"```{strip_tags(self._data['goal_name'])} Closed by {closer}```\n"
 
-        corp_id = app_corp.eve_id
-        corp_name = f"[{app_corp.name}]({zkillboard.corporation_url(corp_id)})"
-        footer = {"icon_url": f"{eveimageserver.corporation_logo_url(corp_id, size=64)}",
-                  "text": f"{app_corp.name}"
-                  }
+        fields = [
+            {
+                'name': 'Creator',
+                'value': f"[{creator}]({evewho.character_url(self._data['creator_id'])})",
+                'inline': True
+            },
+            {
+                'name': 'Corporation',
+                'value': app_corp,
+                'inline': True
+            }
+        ]
 
-        fields = [{'name': 'Creator', 'value': f"[{creator}]({evewho.character_url(creator.eve_id)})", 'inline': True},
-                  {'name': 'Corporation', 'value': corp_name, 'inline': True}]
+        self.package_ping(
+            title,
+            body,
+            self._notification.timestamp,
+            fields=fields,
+            footer=footer,
+            colour=16756480
+        )
 
-        self.package_ping(title,
-                          body,
-                          self._notification.timestamp,
-                          fields=fields,
-                          footer=footer,
-                          colour=16756480)
-
-        self._corp = self._notification.character.character.corporation_id
-        self._alli = self._notification.character.character.alliance_id
+        self._corp, self._alli, self._region = filter_from_notification(
+            self._notification,
+        )
         self.force_at_ping = False
 
 
@@ -112,32 +128,38 @@ class CorporationGoalCompleted(NotificationPing):
     """
 
     def build_ping(self):
-        creator, _ = ctm.EveName.objects.get_or_create_from_esi(
-            self._data['creator_id'])
-        app_corp, _ = ctm.EveName.objects.get_or_create_from_esi(
-            self._data['corporation_id'])
+        creator = get_eve_name_by_id(self._data['creator_id'])
+        app_corp = get_eve_name_by_id(self._data['corporation_id'])
+        footer = footer_from_notification(self._notification)
 
         title = "Corp Project Completed"
         body = f"```{strip_tags(self._data['goal_name'])}```\n"
 
-        corp_id = app_corp.eve_id
-        corp_name = f"[{app_corp.name}]({zkillboard.corporation_url(corp_id)})"
-        footer = {"icon_url": f"{eveimageserver.corporation_logo_url(corp_id, size=64)}",
-                  "text": f"{app_corp.name}"
-                  }
+        fields = [
+            {
+                'name': 'Creator',
+                'value': f"[{creator}]({evewho.character_url(self._data['creator_id'])})",
+                'inline': True
+            },
+            {
+                'name': 'Corporation',
+                'value': app_corp,
+                'inline': True
+            }
+        ]
 
-        fields = [{'name': 'Creator', 'value': f"[{creator}]({evewho.character_url(creator.eve_id)})", 'inline': True},
-                  {'name': 'Corporation', 'value': corp_name, 'inline': True}]
+        self.package_ping(
+            title,
+            body,
+            self._notification.timestamp,
+            fields=fields,
+            footer=footer,
+            colour=16756480
+        )
 
-        self.package_ping(title,
-                          body,
-                          self._notification.timestamp,
-                          fields=fields,
-                          footer=footer,
-                          colour=16756480)
-
-        self._corp = self._notification.character.character.corporation_id
-        self._alli = self._notification.character.character.alliance_id
+        self._corp, self._alli, self._region = filter_from_notification(
+            self._notification,
+        )
         self.force_at_ping = False
 
 
@@ -154,32 +176,39 @@ class CorporationGoalExpired(NotificationPing):
     """
 
     def build_ping(self):
-        creator, _ = ctm.EveName.objects.get_or_create_from_esi(
-            self._data['creator_id'])
-        app_corp, _ = ctm.EveName.objects.get_or_create_from_esi(
-            self._data['corporation_id'])
+        creator = get_eve_name_by_id(self._data['creator_id'])
+        app_corp = get_eve_name_by_id(self._data['corporation_id'])
+        footer = footer_from_notification(self._notification)
 
         title = "Corp Project Expired"
         body = f"```{strip_tags(self._data['goal_name'])}```\n"
 
-        corp_id = app_corp.eve_id
-        corp_name = f"[{app_corp.name}]({zkillboard.corporation_url(corp_id)})"
-        footer = {"icon_url": f"{eveimageserver.corporation_logo_url(corp_id, size=64)}",
-                  "text": f"{app_corp.name}"
-                  }
 
-        fields = [{'name': 'Creator', 'value': f"[{creator}]({evewho.character_url(creator.eve_id)})", 'inline': True},
-                  {'name': 'Corporation', 'value': corp_name, 'inline': True}]
+        fields = [
+            {
+                'name': 'Creator',
+                'value': f"[{creator}]({evewho.character_url(self._data['creator_id'])})",
+                'inline': True
+            },
+            {
+                'name': 'Corporation',
+                'value': app_corp,
+                'inline': True
+            }
+        ]
 
-        self.package_ping(title,
+        self.package_ping(
+            title,
                           body,
                           self._notification.timestamp,
                           fields=fields,
                           footer=footer,
-                          colour=16756480)
+                          colour=16756480
+                          )
 
-        self._corp = self._notification.character.character.corporation_id
-        self._alli = self._notification.character.character.alliance_id
+        self._corp, self._alli, self._region = filter_from_notification(
+            self._notification,
+        )
         self.force_at_ping = False
 
 
@@ -196,22 +225,25 @@ class CorporationGoalLimitReached(NotificationPing):
     """
 
     def build_ping(self):
-        creator, _ = ctm.EveName.objects.get_or_create_from_esi(
-            self._data['creator_id'])
-        app_corp, _ = ctm.EveName.objects.get_or_create_from_esi(
-            self._data['corporation_id'])
+        creator = get_eve_name_by_id(self._data['creator_id'])
+        app_corp = get_eve_name_by_id(self._data['corporation_id'])
+        footer = footer_from_notification(self._notification)
 
         title = "Corp Project Limit Reached"
         body = f"```{strip_tags(self._data['goal_name'])}```\n"
 
-        corp_id = app_corp.eve_id
-        corp_name = f"[{app_corp.name}]({zkillboard.corporation_url(corp_id)})"
-        footer = {"icon_url": f"{eveimageserver.corporation_logo_url(corp_id, size=64)}",
-                  "text": f"{app_corp.name}"
-                  }
-
-        fields = [{'name': 'Creator', 'value': f"[{creator}]({evewho.character_url(creator.eve_id)})", 'inline': True},
-                  {'name': 'Corporation', 'value': corp_name, 'inline': True}]
+        fields = [
+            {
+                'name': 'Creator',
+                'value': f"[{creator}]({evewho.character_url(self._data['creator_id'])})",
+                'inline': True
+            },
+            {
+                'name': 'Corporation',
+                'value': app_corp,
+                'inline': True
+            }
+        ]
 
         self.package_ping(title,
                           body,
@@ -220,6 +252,7 @@ class CorporationGoalLimitReached(NotificationPing):
                           footer=footer,
                           colour=16756480)
 
-        self._corp = self._notification.character.character.corporation_id
-        self._alli = self._notification.character.character.alliance_id
+        self._corp, self._alli, self._region = filter_from_notification(
+            self._notification,
+        )
         self.force_at_ping = False

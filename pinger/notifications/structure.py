@@ -12,8 +12,11 @@ from ..models import MutedStructure
 from ..providers import cache_client
 from .base import NotificationPing
 from .helpers import (
-    create_timer, format_timedelta, time_till_to_dt, time_till_to_string,
-    timers_enabled,
+    create_timer, filter_from_notification, footer_from_notification,
+    format_timedelta, get_eve_name_by_id, get_item_name_from_id,
+    get_location_name_by_id, get_region_url_from_system_id, get_system_from_id,
+    get_system_url_from_id, time_till_out, time_till_to_dt,
+    time_till_to_string, timers_enabled,
 )
 
 logger = logging.getLogger(__name__)
@@ -38,55 +41,54 @@ class StructureLostShields(NotificationPing):
     """
 
     def build_ping(self):
-        system_db = ctm.MapSystem.objects.get(
-            system_id=self._data['solarsystemID'])
-
-        system_name = system_db.name
-        system_name = f"[{system_name}]({dotlan.solar_system_url(system_name)})"
-
-        structure_type, _ = ctm.EveItemType.objects.get_or_create_from_esi(
-            self._data['structureTypeID'])
-
-        try:
-            structure_name = fetch_location_name(
-                self._data['structureID'], "solar_system", self._notification.character.character.character_id)
-            if structure_name:
-                structure_name = structure_name.location_name
-            else:
-                structure_name = "Unknown"
-
-        except Exception as e:
-            logger.error(f"PINGER: Error fetching structure name? {e}")
-            structure_name = "Unknown"
-
-        _secondsRemaining = self._data['timeLeft'] / 10000000  # seconds
-        _refTimeDelta = datetime.timedelta(seconds=_secondsRemaining)
-        tile_till = format_timedelta(_refTimeDelta)
-        ref_date_time = self._notification.timestamp + _refTimeDelta
+        system = get_system_from_id(self._data['solarSystemID'])
+        system_name = get_system_url_from_id(self._data['solarSystemID'])
+        structure_type = get_item_name_from_id(self._data['structureTypeID'])
+        structure_name = get_location_name_by_id(
+            self._data['structureID'],
+            self._notification.character.character.character_id
+        )
+        footer = footer_from_notification(self._notification)
+        tile_till, ref_date_time = time_till_out(self._data['timeLeft'], self._notification)
 
         title = structure_name
         body = "Structure has lost its Shields"
 
-        corp_id = self._notification.character.character.corporation_id
-        corp_ticker = self._notification.character.character.corporation_ticker
-        corp_name = "[%s](%s)" % \
-            (self._notification.character.character.corporation_name,
-             zkillboard.corporation_url(corp_id))
-        footer = {"icon_url": eveimageserver.corporation_logo_url(corp_id, 64),
-                  "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
+        fields = [
+            {
+                'name': 'System',
+                'value': system_name,
+                'inline': True
+            },
+            {
+                'name': 'Type',
+                'value': structure_type,
+                'inline': True},
+            {
+                'name': 'Owner',
+                'value': self._notification.character.character.corporation_name,
+                'inline': False
+            },
+            {
+                'name': 'Time Till Out',
+                'value': tile_till,
+                'inline': False
+            },
+            {
+                'name': 'Date Out',
+                'value': ref_date_time.strftime("%Y-%m-%d %H:%M"),
+                'inline': False
+            }
+        ]
 
-        fields = [{'name': 'System', 'value': system_name, 'inline': True},
-                  {'name': 'Type', 'value': structure_type.name, 'inline': True},
-                  {'name': 'Owner', 'value': corp_name, 'inline': False},
-                  {'name': 'Time Till Out', 'value': tile_till, 'inline': False},
-                  {'name': 'Date Out', 'value': ref_date_time.strftime("%Y-%m-%d %H:%M"), 'inline': False}]
-
-        self.package_ping(title,
-                          body,
-                          self._notification.timestamp,
-                          fields=fields,
-                          footer=footer,
-                          colour=7419530)
+        self.package_ping(
+            title,
+            body,
+            self._notification.timestamp,
+            fields=fields,
+            footer=footer,
+            colour=7419530
+        )
 
         if timers_enabled():
             try:
@@ -94,8 +96,8 @@ class StructureLostShields(NotificationPing):
 
                 self.timer = create_timer(
                     structure_name,
-                    structure_type.name,
-                    system_db.name,
+                    structure_type,
+                    system.name,
                     Timer.TimerType.ARMOR,
                     ref_date_time,
                     self._notification.character.character.corporation
@@ -104,9 +106,10 @@ class StructureLostShields(NotificationPing):
                 logger.exception(
                     f"PINGER: Failed to build timer StructureLostShields {e}")
 
-        self._corp = self._notification.character.character.corporation_id
-        self._alli = self._notification.character.character.alliance_id
-        self._region = system_db.constellation.region.region_id
+        self._corp, self._alli, self._region = filter_from_notification(
+            self._notification,
+            system=system
+        )
 
 
 class StructureLostArmor(NotificationPing):
@@ -128,55 +131,55 @@ class StructureLostArmor(NotificationPing):
     """
 
     def build_ping(self):
-        system_db = ctm.MapSystem.objects.get(
-            system_id=self._data['solarsystemID'])
-
-        system_name = system_db.name
-        system_name = f"[{system_name}]({dotlan.solar_system_url(system_name)})"
-
-        structure_type, _ = ctm.EveItemType.objects.get_or_create_from_esi(
-            self._data['structureTypeID'])
-
-        try:
-            structure_name = fetch_location_name(
-                self._data['structureID'], "solar_system", self._notification.character.character.character_id)
-            if structure_name:
-                structure_name = structure_name.location_name
-            else:
-                structure_name = "Unknown"
-
-        except Exception as e:
-            logger.error(f"PINGER: Error fetching structure name? {e}")
-            structure_name = "Unknown"
-
-        _secondsRemaining = self._data['timeLeft'] / 10000000  # seconds
-        _refTimeDelta = datetime.timedelta(seconds=_secondsRemaining)
-        tile_till = format_timedelta(_refTimeDelta)
-        ref_date_time = self._notification.timestamp + _refTimeDelta
+        system = get_system_from_id(self._data['solarSystemID'])
+        system_name = get_system_url_from_id(self._data['solarSystemID'])
+        structure_type = get_item_name_from_id(self._data['structureTypeID'])
+        structure_name = get_location_name_by_id(
+            self._data['structureID'],
+            self._notification.character.character.character_id
+        )
+        footer = footer_from_notification(self._notification)
+        tile_till, ref_date_time = time_till_out(self._data['timeLeft'], self._notification)
 
         title = structure_name
         body = "Structure has lost its Armor"
 
-        corp_id = self._notification.character.character.corporation_id
-        corp_ticker = self._notification.character.character.corporation_ticker
-        corp_name = "[%s](%s)" % \
-            (self._notification.character.character.corporation_name,
-             zkillboard.corporation_url(corp_id))
-        footer = {"icon_url": eveimageserver.corporation_logo_url(corp_id, 64),
-                  "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
+        fields = [
+            {
+                'name': 'System',
+                'value': system_name,
+                'inline': True
+            },
+            {
+                'name': 'Type',
+                'value': structure_type,
+                'inline': True
+            },
+            {
+                'name': 'Owner',
+                'value': self._notification.character.character.corporation_name,
+                'inline': False
+            },
+            {
+                'name': 'Time Till Out',
+                'value': tile_till,
+                'inline': False
+            },
+            {
+                'name': 'Date Out',
+                'value': ref_date_time.strftime("%Y-%m-%d %H:%M"),
+                'inline': False
+            }
+        ]
 
-        fields = [{'name': 'System', 'value': system_name, 'inline': True},
-                  {'name': 'Type', 'value': structure_type.name, 'inline': True},
-                  {'name': 'Owner', 'value': corp_name, 'inline': False},
-                  {'name': 'Time Till Out', 'value': tile_till, 'inline': False},
-                  {'name': 'Date Out', 'value': ref_date_time.strftime("%Y-%m-%d %H:%M"), 'inline': False}]
-
-        self.package_ping(title,
-                          body,
-                          self._notification.timestamp,
-                          fields=fields,
-                          footer=footer,
-                          colour=7419530)
+        self.package_ping(
+            title,
+            body,
+            self._notification.timestamp,
+            fields=fields,
+            footer=footer,
+            colour=7419530
+        )
 
         if timers_enabled():
             try:
@@ -184,8 +187,8 @@ class StructureLostArmor(NotificationPing):
 
                 self.timer = create_timer(
                     structure_name,
-                    structure_type.name,
-                    system_db.name,
+                    structure_type,
+                    system_name,
                     Timer.TimerType.HULL,
                     ref_date_time,
                     self._notification.character.character.corporation
@@ -194,9 +197,10 @@ class StructureLostArmor(NotificationPing):
                 logger.exception(
                     f"PINGER: Failed to build timer StructureLostArmor {e}")
 
-        self._corp = self._notification.character.character.corporation_id
-        self._alli = self._notification.character.character.alliance_id
-        self._region = system_db.constellation.region.region_id
+        self._corp, self._alli, self._region = filter_from_notification(
+            self._notification,
+            system=system
+        )
 
 
 class StructureUnderAttack(NotificationPing):
@@ -241,29 +245,15 @@ class StructureUnderAttack(NotificationPing):
             # no mutes move on
             pass
 
-        system_db = ctm.MapSystem.objects.get(
-            system_id=self._data['solarsystemID'])
-
-        system_name = system_db.name
-        region_name = system_db.constellation.region.name
-
-        system_name = f"[{system_name}]({dotlan.solar_system_url(system_name)})"
-        region_name = f"[{region_name}]({dotlan.region_url(region_name)})"
-
-        structure_type, _ = ctm.EveItemType.objects.get_or_create_from_esi(
-            self._data['structureTypeID'])
-
-        try:
-            structure_name = fetch_location_name(
-                self._data['structureID'], "solar_system", self._notification.character.character.character_id)
-            if structure_name:
-                structure_name = structure_name.location_name
-            else:
-                structure_name = "Unknown"
-
-        except Exception as e:
-            logger.error(f"PINGER: Error fetching structure name? {e}")
-            structure_name = "Unknown"
+        system = get_system_from_id(self._data['solarSystemID'])
+        system_name = get_system_url_from_id(self._data['solarSystemID'])
+        region_name = get_region_url_from_system_id(self._data['solarSystemID'])
+        structure_type = get_item_name_from_id(self._data['structureTypeID'])
+        structure_name = get_location_name_by_id(
+            self._data['structureID'],
+            self._notification.character.character.character_id
+        )
+        footer = footer_from_notification(self._notification)
 
         title = structure_name
         shld = float(self._data['shieldPercentage'])
@@ -272,39 +262,32 @@ class StructureUnderAttack(NotificationPing):
         body = "Structure under Attack!\n[ S: {0:.2f}% A: {1:.2f}% H: {2:.2f}% ]".format(
             shld, armr, hull)
 
-        corp_id = self._notification.character.character.corporation_id
-        corp_ticker = self._notification.character.character.corporation_ticker
-        # corp_name = "[%s](%s)" % \
-        #     (self._notification.character.character.corporation_name,
-        #      zkillboard.corporation_url(corp_id))
-        footer = {"icon_url": eveimageserver.corporation_logo_url(corp_id, 64),
-                  "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
+        attacking_char = get_eve_name_by_id(self._data['charID'])
 
-        attacking_char, _ = ctm.EveName.objects.get_or_create_from_esi(
-            self._data['charID'])
-
-        attackerStr = "%s%s%s" % \
-            (
-                f"*[{attacking_char.name}]({zkillboard.character_url(attacking_char.eve_id)})*",
-                f", [{attacking_char.corporation.name}]({zkillboard.corporation_url(attacking_char.corporation.eve_id)})" if attacking_char.corporation else "",
-                f", **[{attacking_char.alliance.name}]({zkillboard.alliance_url(attacking_char.alliance.eve_id)})**" if attacking_char.alliance else "",
-            )
+        attackerStr = (
+            f"*[{attacking_char.name}]({zkillboard.character_url(attacking_char.eve_id)})*",
+            f", [{attacking_char.corporation.name}]({zkillboard.corporation_url(attacking_char.corporation.eve_id)})" if attacking_char.corporation else "",
+            f", **[{attacking_char.alliance.name}]({zkillboard.alliance_url(attacking_char.alliance.eve_id)})**" if attacking_char.alliance else "",
+        )
 
         fields = [{'name': 'System', 'value': system_name, 'inline': True},
                   {'name': 'Region', 'value': region_name, 'inline': True},
                   {'name': 'Type', 'value': structure_type.name, 'inline': True},
                   {'name': 'Attacker', 'value': attackerStr, 'inline': False}]
 
-        self.package_ping(title,
-                          body,
-                          self._notification.timestamp,
-                          fields=fields,
-                          footer=footer,
-                          colour=15158332)
+        self.package_ping(
+            title,
+            body,
+            self._notification.timestamp,
+            fields=fields,
+            footer=footer,
+            colour=15158332
+        )
 
-        self._corp = self._notification.character.character.corporation_id
-        self._alli = self._notification.character.character.alliance_id
-        self._region = system_db.constellation.region.region_id
+        self._corp, self._alli, self._region = filter_from_notification(
+            self._notification,
+            system=system
+        )
         self.force_at_ping = True
 
         if structure_name != "Unknown":
@@ -331,60 +314,65 @@ class OwnershipTransferred(NotificationPing):
     """
 
     def build_ping(self):
-        system_db = ctm.MapSystem.objects.get(
-            system_id=self._data['solarSystemID'])
-
-        system_name = system_db.name
-        region_name = system_db.constellation.region.name
-
-        system_name = f"[{system_name}]({dotlan.solar_system_url(system_name)})"
-        region_name = f"[{region_name}]({dotlan.region_url(region_name)})"
-
-        structure_type, _ = ctm.EveItemType.objects.get_or_create_from_esi(
-            self._data['structureTypeID'])
+        system = get_system_from_id(self._data['solarSystemID'])
+        system_name = get_system_url_from_id(self._data['solarSystemID'])
+        region_name = get_region_url_from_system_id(self._data['solarSystemID'])
+        structure_type = get_item_name_from_id(self._data['structureTypeID'])
+        footer = footer_from_notification(self._notification)
 
         structure_name = self._data['structureName']
 
         title = "Structure Transfered"
 
-        originator, _ = ctm.EveName.objects.get_or_create_from_esi(
-            self._data['charID'])
-        new_owner, _ = ctm.EveName.objects.get_or_create_from_esi(
-            self._data['newOwnerCorpID'])
-        old_owner, _ = ctm.EveName.objects.get_or_create_from_esi(
-            self._data['oldOwnerCorpID'])
+        originator, _ = get_eve_name_by_id(self._data['charID'])
+        new_owner, _ = get_eve_name_by_id(self._data['newOwnerCorpID'])
+        old_owner, _ = get_eve_name_by_id(self._data['oldOwnerCorpID'])
 
-        body = "Structure Transfered from %s to %s" % (
-            old_owner.name, new_owner.name)
-
-        corp_id = self._notification.character.character.corporation_id
-        corp_ticker = self._notification.character.character.corporation_ticker
-
-        footer = {"icon_url": eveimageserver.corporation_logo_url(corp_id, 64),
-                  "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
+        body = "Structure Transfered from %s to %s" % (old_owner, new_owner)
 
         fields = []
         if len(structure_name) > 0:
             fields.append(
-                {'name': 'Structure', 'value': structure_name, 'inline': True})
+                {
+                    'name': 'Structure',
+                    'value': structure_name,
+                    'inline': True
+                }
+            )
 
         fields += [
-            {'name': 'System', 'value': system_name, 'inline': True},
-            {'name': 'Region', 'value': region_name, 'inline': True},
-            {'name': 'Type', 'value': structure_type.name, 'inline': True},
-            {'name': 'Originator', 'value': originator.name, 'inline': True}
+            {
+                'name': 'System',
+                'value': system_name,
+                'inline': True},
+            {
+                'name': 'Region',
+                'value': region_name,
+                'inline': True},
+            {
+                'name': 'Type',
+                'value': structure_type,
+                'inline': True},
+            {
+                'name': 'Originator',
+                'value': originator,
+                'inline': True
+            }
         ]
 
-        self.package_ping(title,
-                          body,
-                          self._notification.timestamp,
-                          fields=fields,
-                          footer=footer,
-                          colour=10181046)
+        self.package_ping(
+            title,
+            body,
+            self._notification.timestamp,
+            fields=fields,
+            footer=footer,
+            colour=10181046
+        )
 
-        self._corp = self._notification.character.character.corporation_id
-        self._alli = self._notification.character.character.alliance_id
-        self._region = system_db.constellation.region.region_id
+        self._corp, self._alli, self._region = filter_from_notification(
+            self._notification,
+            system=system
+        )
 
 
 class StructureAnchoring(NotificationPing):
@@ -410,55 +398,54 @@ class StructureAnchoring(NotificationPing):
     """
 
     def build_ping(self):
-        system_db = ctm.MapSystem.objects.get(
-            system_id=self._data['solarsystemID'])
-
-        system_name = system_db.name
-        region_name = system_db.constellation.region.name
-
-        system_name = f"[{system_name}]({dotlan.solar_system_url(system_name)})"
-        region_name = f"[{region_name}]({dotlan.region_url(region_name)})"
-
-        structure_type, _ = ctm.EveItemType.objects.get_or_create_from_esi(
-            self._data['structureTypeID'])
-
-        try:
-            structure_name = fetch_location_name(
-                self._data['structureID'], "solar_system", self._notification.character.character.character_id)
-            if structure_name:
-                structure_name = structure_name.location_name
-            else:
-                structure_name = "Unknown"
-
-        except Exception as e:
-            logger.error(f"PINGER: Error fetching structure name? {e}")
-            structure_name = "Unknown"
+        system = get_system_from_id(self._data['solarSystemID'])
+        system_name = get_system_url_from_id(self._data['solarSystemID'])
+        region_name = get_region_url_from_system_id(self._data['solarSystemID'])
+        structure_type = get_item_name_from_id(self._data['structureTypeID'])
+        structure_name = get_location_name_by_id(
+            self._data['structureID'],
+            self._notification.character.character.character_id
+        )
+        footer = footer_from_notification(self._notification)
 
         title = structure_name
         body = "Structure Anchoring!"
 
-        corp_id = self._notification.character.character.corporation_id
-        corp_ticker = self._notification.character.character.corporation_ticker
-        corp_name = "[%s](%s)" % \
-            (self._notification.character.character.corporation_name,
-             zkillboard.corporation_url(corp_id))
-        footer = {"icon_url": eveimageserver.corporation_logo_url(corp_id, 64),
-                  "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
+        fields = [
+            {
+                'name': 'Corporation',
+                'value': self._notification.character.character.corporation_name,
+                'inline': True
+            },
+            {
+                'name': 'System',
+                'value': system_name,
+                'inline': True
+            },
+            {
+                'name': 'Region',
+                'value': region_name,
+                'inline': True
+            },
+            {
+                'name': 'Type',
+                'value': structure_type,
+                'inline': True
+            }
+        ]
+        self.package_ping(
+            title,
+            body,
+            self._notification.timestamp,
+            fields=fields,
+            footer=footer,
+            colour=1752220
+        )
 
-        fields = [{'name': 'Corporation', 'value': corp_name, 'inline': True},
-                  {'name': 'System', 'value': system_name, 'inline': True},
-                  {'name': 'Region', 'value': region_name, 'inline': True},
-                  {'name': 'Type', 'value': structure_type.name, 'inline': True}]
-        self.package_ping(title,
-                          body,
-                          self._notification.timestamp,
-                          fields=fields,
-                          footer=footer,
-                          colour=1752220)
-
-        self._corp = self._notification.character.character.corporation_id
-        self._alli = self._notification.character.character.alliance_id
-        self._region = system_db.constellation.region.region_id
+        self._corp, self._alli, self._region = filter_from_notification(
+            self._notification,
+            system=system
+        )
         self.force_at_ping = False
 
 
@@ -478,57 +465,55 @@ class StructureWentLowPower(NotificationPing):
     """
 
     def build_ping(self):
-        system_db = ctm.MapSystem.objects.get(
-            system_id=self._data['solarsystemID'])
-
-        system_name = system_db.name
-        region_name = system_db.constellation.region.name
-
-        system_name = f"[{system_name}]({dotlan.solar_system_url(system_name)})"
-        region_name = f"[{region_name}]({dotlan.region_url(region_name)})"
-
-        structure_type, _ = ctm.EveItemType.objects.get_or_create_from_esi(
-            self._data['structureTypeID'])
-
-        try:
-            structure_name = fetch_location_name(
-                self._data['structureID'], "solar_system", self._notification.character.character.character_id)
-            if structure_name:
-                structure_name = structure_name.location_name
-            else:
-                structure_name = "Unknown"
-
-        except Exception as e:
-            logger.error(f"PINGER: Error fetching structure name? {e}")
-            structure_name = "Unknown"
+        system = get_system_from_id(self._data['solarSystemID'])
+        system_name = get_system_url_from_id(self._data['solarSystemID'])
+        region_name = get_region_url_from_system_id(self._data['solarSystemID'])
+        structure_type = get_item_name_from_id(self._data['structureTypeID'])
+        structure_name = get_location_name_by_id(
+            self._data['structureID'],
+            self._notification.character.character.character_id
+        )
+        footer = footer_from_notification(self._notification)
 
         title = structure_name
         body = "Structure Went Low Power!"
 
-        corp_id = self._notification.character.character.corporation_id
-        corp_ticker = self._notification.character.character.corporation_ticker
-        corp_name = "[%s](%s)" % \
-            (self._notification.character.character.corporation_name,
-             zkillboard.corporation_url(corp_id))
-        footer = {"icon_url": eveimageserver.corporation_logo_url(corp_id, 64),
-                  "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
+        fields = [
+            {
+                'name': 'Corporation',
+                'value': self._notification.character.character.corporation_name,
+                'inline': True
+            },
+            {
+                'name': 'System',
+                'value': system_name,
+                'inline': True
+            },
+            {
+                'name': 'Region',
+                'value': region_name,
+                'inline': True
+            },
+            {
+                'name': 'Type',
+                'value': structure_type,
+                'inline': True
+            },
+        ]
 
-        fields = [{'name': 'Corporation', 'value': corp_name, 'inline': True},
-                  {'name': 'System', 'value': system_name, 'inline': True},
-                  {'name': 'Region', 'value': region_name, 'inline': True},
-                  {'name': 'Type', 'value': structure_type.name, 'inline': True},
-                  ]
+        self.package_ping(
+            title,
+            body,
+            self._notification.timestamp,
+            fields=fields,
+            footer=footer,
+            colour=15158332
+        )
 
-        self.package_ping(title,
-                          body,
-                          self._notification.timestamp,
-                          fields=fields,
-                          footer=footer,
-                          colour=15158332)
-
-        self._corp = self._notification.character.character.corporation_id
-        self._alli = self._notification.character.character.alliance_id
-        self._region = system_db.constellation.region.region_id
+        self._corp, self._alli, self._region = filter_from_notification(
+            self._notification,
+            system=system
+        )
         self.force_at_ping = False
 
 
@@ -548,57 +533,55 @@ class StructureWentHighPower(NotificationPing):
     """
 
     def build_ping(self):
-        system_db = ctm.MapSystem.objects.get(
-            system_id=self._data['solarsystemID'])
-
-        system_name = system_db.name
-        region_name = system_db.constellation.region.name
-
-        system_name = f"[{system_name}]({dotlan.solar_system_url(system_name)})"
-        region_name = f"[{region_name}]({dotlan.region_url(region_name)})"
-
-        structure_type, _ = ctm.EveItemType.objects.get_or_create_from_esi(
-            self._data['structureTypeID'])
-
-        try:
-            structure_name = fetch_location_name(
-                self._data['structureID'], "solar_system", self._notification.character.character.character_id)
-            if structure_name:
-                structure_name = structure_name.location_name
-            else:
-                structure_name = "Unknown"
-
-        except Exception as e:
-            logger.error(f"PINGER: Error fetching structure name? {e}")
-            structure_name = "Unknown"
+        system = get_system_from_id(self._data['solarSystemID'])
+        system_name = get_system_url_from_id(self._data['solarSystemID'])
+        region_name = get_region_url_from_system_id(self._data['solarSystemID'])
+        structure_type = get_item_name_from_id(self._data['structureTypeID'])
+        structure_name = get_location_name_by_id(
+            self._data['structureID'],
+            self._notification.character.character.character_id
+        )
+        footer = footer_from_notification(self._notification)
 
         title = structure_name
         body = "Structure Went High Power!"
 
-        corp_id = self._notification.character.character.corporation_id
-        corp_ticker = self._notification.character.character.corporation_ticker
-        corp_name = "[%s](%s)" % \
-            (self._notification.character.character.corporation_name,
-             zkillboard.corporation_url(corp_id))
-        footer = {"icon_url": eveimageserver.corporation_logo_url(corp_id, 64),
-                  "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
+        fields = [
+            {
+                'name': 'Corporation',
+                'value': self._notification.character.character.corporation_name,
+                'inline': True
+            },
+            {
+                'name': 'System',
+                'value': system_name,
+                'inline': True
+            },
+            {
+                'name': 'Region',
+                'value': region_name,
+                'inline': True
+            },
+            {
+                'name': 'Type',
+                'value': structure_type,
+                'inline': True
+            },
+        ]
 
-        fields = [{'name': 'Corporation', 'value': corp_name, 'inline': True},
-                  {'name': 'System', 'value': system_name, 'inline': True},
-                  {'name': 'Region', 'value': region_name, 'inline': True},
-                  {'name': 'Type', 'value': structure_type.name, 'inline': True},
-                  ]
+        self.package_ping(
+            title,
+            body,
+            self._notification.timestamp,
+            fields=fields,
+            footer=footer,
+            colour=3066993
+        )
 
-        self.package_ping(title,
-                          body,
-                          self._notification.timestamp,
-                          fields=fields,
-                          footer=footer,
-                          colour=3066993)
-
-        self._corp = self._notification.character.character.corporation_id
-        self._alli = self._notification.character.character.alliance_id
-        self._region = system_db.constellation.region.region_id
+        self._corp, self._alli, self._region = filter_from_notification(
+            self._notification,
+            system=system
+        )
         self.force_at_ping = False
 
 
@@ -624,60 +607,67 @@ class StructureUnanchoring(NotificationPing):
     """
 
     def build_ping(self):
-        system_db = ctm.MapSystem.objects.get(
-            system_id=self._data['solarsystemID'])
-
-        system_name = system_db.name
-        region_name = system_db.constellation.region.name
-
-        system_name = f"[{system_name}]({dotlan.solar_system_url(system_name)})"
-        region_name = f"[{region_name}]({dotlan.region_url(region_name)})"
-
-        structure_type, _ = ctm.EveItemType.objects.get_or_create_from_esi(
-            self._data['structureTypeID'])
-
-        try:
-            structure_name = fetch_location_name(
-                self._data['structureID'], "solar_system", self._notification.character.character.character_id)
-            if structure_name:
-                structure_name = structure_name.location_name
-            else:
-                structure_name = "Unknown"
-
-        except Exception as e:
-            logger.error(f"PINGER: Error fetching structure name? {e}")
-            structure_name = "Unknown"
+        system = get_system_from_id(self._data['solarSystemID'])
+        system_name = get_system_url_from_id(self._data['solarSystemID'])
+        region_name = get_region_url_from_system_id(self._data['solarSystemID'])
+        structure_type = get_item_name_from_id(self._data['structureTypeID'])
+        structure_name = get_location_name_by_id(
+            self._data['structureID'],
+            self._notification.character.character.character_id
+        )
+        footer = footer_from_notification(self._notification)
 
         title = structure_name
         body = "Structure Unanchoring!"
 
-        corp_id = self._notification.character.character.corporation_id
-        corp_ticker = self._notification.character.character.corporation_ticker
-        corp_name = "[%s](%s)" % \
-            (self._notification.character.character.corporation_name,
-             zkillboard.corporation_url(corp_id))
-        footer = {"icon_url": eveimageserver.corporation_logo_url(corp_id, 64),
-                  "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
-        date_out = time_till_to_dt(
-            self._data['timeLeft'], self._notification.timestamp)
-        time_till = time_till_to_string(self._data['timeLeft'])
-        fields = [{'name': 'Corporation', 'value': corp_name, 'inline': True},
-                  {'name': 'System', 'value': system_name, 'inline': True},
-                  {'name': 'Region', 'value': region_name, 'inline': True},
-                  {'name': 'Type', 'value': structure_type.name, 'inline': True},
-                  {'name': 'Time Till Out', 'value': time_till, 'inline': False},
-                  {'name': 'Date Out', 'value': date_out.strftime("%Y-%m-%d %H:%M"), 'inline': False}]
+        tile_till, ref_date_time = time_till_out(self._data['timeLeft'], self._notification)
 
-        self.package_ping(title,
-                          body,
-                          self._notification.timestamp,
-                          fields=fields,
-                          footer=footer,
-                          colour=10181046)
+        fields = [
+            {
+                'name': 'Corporation',
+                'value': self._notification.character.character.corporation_name,
+                'inline': True
+            },
+            {
+                'name': 'System',
+                'value': system_name,
+                'inline': True
+            },
+            {
+                'name': 'Region',
+                'value': region_name,
+                'inline': True
+            },
+            {
+                'name': 'Type',
+                'value': structure_type,
+                'inline': True
+            },
+            {
+                'name': 'Time Till Out',
+                'value': tile_till,
+                'inline': False
+            },
+            {
+                'name': 'Date Out',
+                'value': ref_date_time.strftime("%Y-%m-%d %H:%M"),
+                'inline': False
+            }
+        ]
 
-        self._corp = self._notification.character.character.corporation_id
-        self._alli = self._notification.character.character.alliance_id
-        self._region = system_db.constellation.region.region_id
+        self.package_ping(
+            title,
+            body,
+            self._notification.timestamp,
+            fields=fields,
+            footer=footer,
+            colour=10181046
+        )
+
+        self._corp, self._alli, self._region = filter_from_notification(
+            self._notification,
+            system=system
+        )
         self.force_at_ping = False
 
 
@@ -703,57 +693,54 @@ class StructureDestroyed(NotificationPing):
     """
 
     def build_ping(self):
-        system_db = ctm.MapSystem.objects.get(
-            system_id=self._data['solarsystemID'])
-
-        system_name = system_db.name
-        region_name = system_db.constellation.region.name
-
-        system_name = f"[{system_name}]({dotlan.solar_system_url(system_name)})"
-        region_name = f"[{region_name}]({dotlan.region_url(region_name)})"
-
-        structure_type, _ = ctm.EveItemType.objects.get_or_create_from_esi(
-            self._data['structureTypeID'])
-
-        try:
-            structure_name = fetch_location_name(
-                self._data['structureID'], "solar_system", self._notification.character.character.character_id)
-            if structure_name:
-                structure_name = structure_name.location_name
-            else:
-                structure_name = "Unknown"
-
-        except Exception as e:
-            logger.error(f"PINGER: Error fetching structure name? {e}")
-            structure_name = "Unknown"
+        system = get_system_from_id(self._data['solarSystemID'])
+        system_name = get_system_url_from_id(self._data['solarSystemID'])
+        region_name = get_region_url_from_system_id(self._data['solarSystemID'])
+        structure_type = get_item_name_from_id(self._data['structureTypeID'])
+        structure_name = get_location_name_by_id(
+            self._data['structureID'],
+            self._notification.character.character.character_id
+        )
+        footer = footer_from_notification(self._notification)
 
         title = structure_name
         body = "Structure Destroyed!"
 
-        corp_id = self._notification.character.character.corporation_id
-        corp_ticker = self._notification.character.character.corporation_ticker
-        corp_name = "[%s](%s)" % \
-            (self._notification.character.character.corporation_name,
-             zkillboard.corporation_url(corp_id))
-        footer = {"icon_url": eveimageserver.corporation_logo_url(corp_id, 64),
-                  "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
+        fields = [
+            {
+                'name': 'Corporation',
+                'value': self._notification.character.character.corporation_name,
+                'inline': True
+            },
+            {
+                'name': 'System',
+                'value': system_name,
+                'inline': True},
+            {
+                'name': 'Region',
+                'value': region_name,
+                'inline': True
+            },
+            {
+                'name': 'Type',
+                'value': structure_type.name,
+                'inline': True
+            },
+        ]
 
-        fields = [{'name': 'Corporation', 'value': corp_name, 'inline': True},
-                  {'name': 'System', 'value': system_name, 'inline': True},
-                  {'name': 'Region', 'value': region_name, 'inline': True},
-                  {'name': 'Type', 'value': structure_type.name, 'inline': True},
-                  ]
+        self.package_ping(
+            title,
+            body,
+            self._notification.timestamp,
+            fields=fields,
+            footer=footer,
+            colour=15158332
+        )
 
-        self.package_ping(title,
-                          body,
-                          self._notification.timestamp,
-                          fields=fields,
-                          footer=footer,
-                          colour=15158332)
-
-        self._corp = self._notification.character.character.corporation_id
-        self._alli = self._notification.character.character.alliance_id
-        self._region = system_db.constellation.region.region_id
+        self._corp, self._alli, self._region = filter_from_notification(
+            self._notification,
+            system=system
+        )
         self.force_at_ping = False
 
 
@@ -804,57 +791,56 @@ class StructureNoReagentsAlert(NotificationPing):
     """
 
     def build_ping(self):
-        system_db = ctm.MapSystem.objects.get(
-            system_id=self._data['solarsystemID'])
-
-        system_name = system_db.name
-        region_name = system_db.constellation.region.name
-
-        system_name = f"[{system_name}]({dotlan.solar_system_url(system_name)})"
-        region_name = f"[{region_name}]({dotlan.region_url(region_name)})"
-
-        structure_type, _ = ctm.EveItemType.objects.get_or_create_from_esi(
-            self._data['structureTypeID'])
-
-        try:
-            structure_name = fetch_location_name(
-                self._data['structureID'], "solar_system", self._notification.character.character.character_id)
-            if structure_name:
-                structure_name = structure_name.location_name
-            else:
-                structure_name = "Unknown"
-
-        except Exception as e:
-            logger.error(f"PINGER: Error fetching structure name? {e}")
-            structure_name = "Unknown"
+        system = get_system_from_id(self._data['solarSystemID'])
+        system_name = get_system_url_from_id(self._data['solarSystemID'])
+        region_name = get_region_url_from_system_id(self._data['solarSystemID'])
+        structure_type = get_item_name_from_id(self._data['structureTypeID'])
+        structure_name = get_location_name_by_id(
+            self._data['structureID'],
+            self._notification.character.character.character_id
+        )
+        footer = footer_from_notification(self._notification)
 
         title = structure_name
         body = "Structure Out of Reagents!"
 
-        corp_id = self._notification.character.character.corporation_id
-        corp_ticker = self._notification.character.character.corporation_ticker
-        corp_name = "[%s](%s)" % \
-            (self._notification.character.character.corporation_name,
-             zkillboard.corporation_url(corp_id))
-        footer = {"icon_url": eveimageserver.corporation_logo_url(corp_id, 64),
-                  "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
         fields = [
-            {'name': 'Corporation', 'value': corp_name, 'inline': True},
-            {'name': 'System', 'value': system_name, 'inline': True},
-            {'name': 'Region', 'value': region_name, 'inline': True},
-            {'name': 'Type', 'value': structure_type.name, 'inline': True}
+            {
+                'name': 'Corporation',
+                'value': self._notification.character.character.corporation_name,
+                'inline': True
+            },
+            {
+                'name': 'System',
+                'value': system_name,
+                'inline': True
+            },
+            {
+                'name': 'Region',
+
+                'value': region_name,
+                'inline': True
+            },
+            {
+                'name': 'Type',
+                'value': structure_type.name,
+                'inline': True
+            }
         ]
 
-        self.package_ping(title,
-                          body,
-                          self._notification.timestamp,
-                          fields=fields,
-                          footer=footer,
-                          colour=10181046)
+        self.package_ping(
+            title,
+            body,
+            self._notification.timestamp,
+            fields=fields,
+            footer=footer,
+            colour=10181046
+        )
 
-        self._corp = self._notification.character.character.corporation_id
-        self._alli = self._notification.character.character.alliance_id
-        self._region = system_db.constellation.region.region_id
+        self._corp, self._alli, self._region = filter_from_notification(
+            self._notification,
+            system=system
+        )
         self.force_at_ping = True
 
 
@@ -874,58 +860,53 @@ class StructureLowReagentsAlert(NotificationPing):
     """
 
     def build_ping(self):
-        system_db = ctm.MapSystem.objects.get(
-            system_id=self._data['solarsystemID'])
-
-        system_name = system_db.name
-        region_name = system_db.constellation.region.name
-
-        system_name = f"[{system_name}]({dotlan.solar_system_url(system_name)})"
-        region_name = f"[{region_name}]({dotlan.region_url(region_name)})"
-
-        structure_type, _ = ctm.EveItemType.objects.get_or_create_from_esi(
-            self._data['structureTypeID'])
-
-        try:
-            structure_name = fetch_location_name(
-                self._data['structureID'],
-                "solar_system",
-                self._notification.character.character.character_id
-            )
-            if structure_name:
-                structure_name = structure_name.location_name
-            else:
-                structure_name = "Unknown"
-
-        except Exception as e:
-            logger.error(f"PINGER: Error fetching structure name? {e}")
-            structure_name = "Unknown"
+        system = get_system_from_id(self._data['solarSystemID'])
+        system_name = get_system_url_from_id(self._data['solarSystemID'])
+        region_name = get_region_url_from_system_id(self._data['solarSystemID'])
+        structure_type = get_item_name_from_id(self._data['structureTypeID'])
+        structure_name = get_location_name_by_id(
+            self._data['structureID'],
+            self._notification.character.character.character_id
+        )
+        footer = footer_from_notification(self._notification)
 
         title = structure_name
         body = "Structure Low Reagents!"
 
-        corp_id = self._notification.character.character.corporation_id
-        corp_ticker = self._notification.character.character.corporation_ticker
-        corp_name = "[%s](%s)" % \
-            (self._notification.character.character.corporation_name,
-             zkillboard.corporation_url(corp_id))
-        footer = {"icon_url": eveimageserver.corporation_logo_url(corp_id, 64),
-                  "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
         fields = [
-            {'name': 'Corporation', 'value': corp_name, 'inline': True},
-            {'name': 'System', 'value': system_name, 'inline': True},
-            {'name': 'Region', 'value': region_name, 'inline': True},
-            {'name': 'Type', 'value': structure_type.name, 'inline': True}
+            {
+                'name': 'Corporation',
+                'value': self._notification.character.character.corporation_name,
+                'inline': True
+            },
+            {
+                'name': 'System',
+                'value': system_name,
+                'inline': True
+            },
+            {
+                'name': 'Region',
+                'value': region_name,
+                'inline': True
+            },
+            {
+                'name': 'Type',
+                'value': structure_type.name,
+                'inline': True
+            }
         ]
 
-        self.package_ping(title,
-                          body,
-                          self._notification.timestamp,
-                          fields=fields,
-                          footer=footer,
-                          colour=10181046)
+        self.package_ping(
+            title,
+            body,
+            self._notification.timestamp,
+            fields=fields,
+            footer=footer,
+            colour=10181046
+        )
 
-        self._corp = self._notification.character.character.corporation_id
-        self._alli = self._notification.character.character.alliance_id
-        self._region = system_db.constellation.region.region_id
+        self._corp, self._alli, self._region = filter_from_notification(
+            self._notification,
+            system=system
+        )
         self.force_at_ping = True

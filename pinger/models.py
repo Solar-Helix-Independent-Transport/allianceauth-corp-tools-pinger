@@ -2,13 +2,16 @@ import json
 import logging
 from datetime import timedelta
 
-from allianceauth.eveonline.models import EveAllianceInfo, EveCorporationInfo
-from allianceauth.eveonline.evelinks import dotlan, eveimageserver
-from corptools.models import MapRegion, Structure
+from corptools.models import Structure
+from eve_sde.models import Region
+
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.deletion import CASCADE
 from django.utils import timezone
+
+from allianceauth.eveonline.evelinks import dotlan, eveimageserver
+from allianceauth.eveonline.models import EveAllianceInfo, EveCorporationInfo
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +36,7 @@ class DiscordWebhook(models.Model):
                                              related_name="alli_filters",
                                              blank=True)
 
-    region_filter = models.ManyToManyField(MapRegion,
+    region_filter = models.ManyToManyField(Region,
                                            related_name="region_filters",
                                            blank=True)
 
@@ -151,7 +154,7 @@ class FuelPingRecord(models.Model):
             f"PINGER: FUEL Webhooks {webhooks.count()}")
 
         for hook in webhooks:
-            regions = hook.region_filter.all().values_list("region_id", flat=True)
+            regions = hook.region_filter.all().values_list("id", flat=True)
             alliances = hook.alliance_filter.all().values_list("alliance_id", flat=True)
             corporations = hook.corporation_filter.all(
             ).values_list("corporation_id", flat=True)
@@ -160,7 +163,7 @@ class FuelPingRecord(models.Model):
             alli_filter = self.structure.corporation.corporation.alliance
             if alli_filter:
                 alli_filter = alli_filter.alliance_id
-            region_filter = self.structure.system_name.constellation.region.region_id
+            region_filter = self.structure.system_name.constellation.region.id
 
             if corp_filter is not None and len(corporations) > 0:
                 if corp_filter not in corporations:

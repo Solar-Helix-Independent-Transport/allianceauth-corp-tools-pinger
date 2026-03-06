@@ -1,8 +1,15 @@
 
 import time
 
-from allianceauth.eveonline.evelinks import dotlan, eveimageserver, zkillboard
 from corptools import models as ctm
+
+from allianceauth.eveonline.evelinks import dotlan, eveimageserver, zkillboard
+
+from pinger.notifications.helpers import (
+    filter_from_notification, footer_from_notification, get_attacker_string,
+    get_item_name_from_id, get_moon_name_from_id,
+    get_region_url_from_system_id, get_system_from_id, get_system_url_from_id,
+)
 
 from ..exceptions import MutedException
 from ..models import MutedStructure
@@ -39,20 +46,12 @@ class TowerAlertMsg(NotificationPing):
             # no mutes move on
             pass
 
-        system_db = ctm.MapSystem.objects.get(
-            system_id=self._data['solarSystemID'])
-
-        system_name = system_db.name
-        region_name = system_db.constellation.region.name
-
-        system_name = f"[{system_name}]({dotlan.solar_system_url(system_name)})"
-        region_name = f"[{region_name}]({dotlan.region_url(region_name)})"
-
-        moon, _ = ctm.MapSystemMoon.objects.get_or_create_from_esi(
-            self._data['moonID'])
-
-        structure_type, _ = ctm.EveItemType.objects.get_or_create_from_esi(
-            self._data['typeID'])
+        system = get_system_from_id(self._data['solarSystemID'])
+        system_name = get_system_url_from_id(self._data['solarSystemID'])
+        moon = get_moon_name_from_id(self._data['moonID'])
+        region_name = get_region_url_from_system_id(self._data['solarSystemID'])
+        structure_type = get_item_name_from_id(self._data['structureTypeID'])
+        footer = footer_from_notification(self._notification)
 
         title = "Starbase Under Attack!"
         shld = float(self._data['shieldValue']*100)
@@ -61,54 +60,55 @@ class TowerAlertMsg(NotificationPing):
         body = "Structure under Attack!\n[ S: {0:.2f}% A: {1:.2f}% H: {2:.2f}% ]".format(
             shld, armr, hull)
 
-        corp_id = self._notification.character.character.corporation_id
-        corp_ticker = self._notification.character.character.corporation_ticker
-        corp_name = "[%s](%s)" % \
-            (self._notification.character.character.corporation_name,
-             zkillboard.corporation_url(corp_id))
-        footer = {"icon_url": eveimageserver.corporation_logo_url(corp_id, 64),
-                  "text": "%s (%s)" % (self._notification.character.character.corporation_name, corp_ticker)}
+        attackerStr = get_attacker_string(
+            self._data['aggressorID'],
+            self._data['aggressorCorpID'],
+            self._data.get('aggressorAllianceID', False)
+        )
 
-        attackerStr = "Unknown"
-        if self._data['aggressorID']:
-            attacking_char, _ = ctm.EveName.objects.get_or_create_from_esi(
-                self._data['aggressorID'])
-            attacking_char_corp, _ = ctm.EveName.objects.get_or_create_from_esi(
-                self._data['aggressorCorpID'])
-            attacking_alliance_name = ""
-            attacking_alliance_id = None
-            if self._data.get('aggressorAllianceID', False):
-                attacking_char_alliance, _ = ctm.EveName.objects.get_or_create_from_esi(
-                    self._data['aggressorAllianceID'])
-                attacking_alliance_name = attacking_char_alliance.name
-                attacking_alliance_id = attacking_char_alliance.eve_id
+        fields = [
+            {'name': 'Moon',
+             'value': moon,
+             'inline': True
+             },
+            {
+                'name': 'System',
+                'value': system_name,
+                'inline': True
+            },
+            {'name': 'Region',
+             'value': region_name,
+             'inline': True
+             },
+            {
+                'name': 'Type',
+                'value': structure_type.name,
+                'inline': True
+            },
+            {
+                'name': 'Attacker',
+                'value': attackerStr,
+                'inline': False
+            }
+        ]
 
-            attackerStr = "%s, %s, %s" % \
-                          (f"*[{attacking_char.name}]({zkillboard.character_url(attacking_char.eve_id)})*",
-                          f"[{attacking_char_corp.name}]({zkillboard.corporation_url(attacking_char_corp.eve_id)})",
-                          f"**[{attacking_alliance_name}]({zkillboard.alliance_url(attacking_alliance_id)})**" if attacking_alliance_id else "")
+        self.package_ping(
+            title,
+            body,
+            self._notification.timestamp,
+            fields=fields,
+            footer=footer,
+            colour=15105570
+        )
 
-        fields = [{'name': 'Moon', 'value': moon.name, 'inline': True},
-                  {'name': 'System', 'value': system_name, 'inline': True},
-                  {'name': 'Region', 'value': region_name, 'inline': True},
-                  {'name': 'Type', 'value': structure_type.name, 'inline': True},
-                  {'name': 'Attacker', 'value': attackerStr, 'inline': False}]
+        self._corp, self._alli, self._region = filter_from_notification(
+            self._notification,
+            system=system
+        )
 
-        self.package_ping(title,
-                          body,
-                          self._notification.timestamp,
-                          fields=fields,
-                          footer=footer,
-                          colour=15105570)
-
-        self._corp = self._notification.character.character.corporation_id
-        self._alli = self._notification.character.character.alliance_id
-        self._region = system_db.constellation.region.region_id
-        self.force_at_ping = True
-
-        if moon.name:
+        if moon:
             epoch_time = int(time.time())
-            cache_client.zadd("ctpingermute", {moon.name: epoch_time})
+            cache_client.zadd("ctpingermute", {moon: epoch_time})
             rcount = cache_client.zcard("ctpingermute")
             if rcount > 5:
                 cache_client.bzpopmin("ctpingermute")

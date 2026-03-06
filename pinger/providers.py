@@ -1,3 +1,5 @@
+from corptools.providers import esi_openapi
+
 from esi.clients import EsiClientProvider, esi_client_factory
 
 try:

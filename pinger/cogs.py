@@ -6,12 +6,11 @@ from aadiscordbot import app_settings
 from aadiscordbot.cogs.utils.decorators import sender_has_perm
 from aadiscordbot.tasks import send_channel_message_by_discord_id
 # AA Contexts
-from corptools.models import (
-    CharacterAudit, EveLocation, MapSystem, MapSystemMoon,
-)
+from corptools.models import CharacterAudit, EveLocation
 from discord import AutocompleteContext, ButtonStyle, Embed, option, ui
 from discord.commands import Option, SlashCommandGroup
 from discord.ext import commands
+from eve_sde.models import Moon, SolarSystem
 
 from django.conf import settings
 from django.db.models.query_utils import Q
@@ -97,7 +96,7 @@ class Pinger(commands.Cog):
 
     async def search_systems(ctx: AutocompleteContext):
         """Returns a list of systems that have the characters entered so far."""
-        return list(MapSystem.objects.filter(name__icontains=f"{ctx.value}")[:10].values_list("name", flat=True))
+        return list(SolarSystem.objects.filter(name__icontains=f"{ctx.value}")[:10].values_list("name", flat=True))
 
     @commands.slash_command(name='attack', guild_ids=app_settings.get_all_servers())
     @option("system", description="What System has been attacked?", autocomplete=search_systems)
@@ -159,7 +158,7 @@ class Pinger(commands.Cog):
 
     def mute_str(self, input_name):
         locs = EveLocation.objects.filter(location_name=input_name.strip())
-        moon = MapSystemMoon.objects.filter(name=input_name.strip())
+        moon = Moon.objects.filter(name=input_name.strip())
         if locs.count() > 0:
             for loc in locs:
                 muted, _ = MutedStructure.objects.update_or_create(
@@ -175,7 +174,7 @@ class Pinger(commands.Cog):
 
     def unmute_str(self, input_name):
         locs = EveLocation.objects.filter(location_name=input_name.strip())
-        moon = MapSystemMoon.objects.filter(name=input_name.strip())
+        moon = Moon.objects.filter(name=input_name.strip())
         if locs.count() > 0:
             for loc in locs:
                 MutedStructure.objects.filter(
@@ -184,7 +183,7 @@ class Pinger(commands.Cog):
         elif moon.count() > 0:
             for loc in moon:
                 MutedStructure.objects.filter(
-                    structure_id=loc.moon_id).delete()
+                    structure_id=loc.id).delete()
             return True
         else:
             return False
