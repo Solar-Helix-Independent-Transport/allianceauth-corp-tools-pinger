@@ -223,10 +223,10 @@ class SkyhookUnderAttack(NotificationPing):
     """
 
     def build_ping(self):
-        system = get_system_from_id(self._data['solarSystemID'])
+        system = get_system_from_id(self._data['solarsystemID'])
         planet_name = get_planet_name_from_id(self._data['planetID'])
-        system_name = get_system_url_from_id(self._data['solarSystemID'])
-        region_name = get_region_url_from_system_id(self._data['solarSystemID'])
+        system_name = get_system_url_from_id(self._data['solarsystemID'])
+        region_name = get_region_url_from_system_id(self._data['solarsystemID'])
         structure_type = get_item_name_from_id(self._data['typeID'])
         footer = footer_from_notification(self._notification)
 
@@ -295,10 +295,10 @@ class SkyhookLostShields(NotificationPing):
     """
 
     def build_ping(self):
-        system = get_system_from_id(self._data['solarSystemID'])
+        system = get_system_from_id(self._data['solarsystemID'])
         planet_name = get_planet_name_from_id(self._data['planetID'])
-        system_name = get_system_url_from_id(self._data['solarSystemID'])
-        region_name = get_region_url_from_system_id(self._data['solarSystemID'])
+        system_name = get_system_url_from_id(self._data['solarsystemID'])
+        region_name = get_region_url_from_system_id(self._data['solarsystemID'])
         structure_type = get_item_name_from_id(self._data['typeID'])
         footer = footer_from_notification(self._notification)
 
@@ -393,10 +393,10 @@ class SkyhookOnline(NotificationPing):
     """
 
     def build_ping(self):
-        system = get_system_from_id(self._data['solarSystemID'])
+        system = get_system_from_id(self._data['solarsystemID'])
         planet_name = get_planet_name_from_id(self._data['planetID'])
-        system_name = get_system_url_from_id(self._data['solarSystemID'])
-        region_name = get_region_url_from_system_id(self._data['solarSystemID'])
+        system_name = get_system_url_from_id(self._data['solarsystemID'])
+        region_name = get_region_url_from_system_id(self._data['solarsystemID'])
         structure_type = get_item_name_from_id(self._data['typeID'])
         footer = footer_from_notification(self._notification)
 
@@ -471,10 +471,10 @@ class SkyhookDeployed(NotificationPing):
     """
 
     def build_ping(self):
-        system = get_system_from_id(self._data['solarSystemID'])
+        system = get_system_from_id(self._data['solarsystemID'])
         planet_name = get_planet_name_from_id(self._data['planetID'])
-        system_name = get_system_url_from_id(self._data['solarSystemID'])
-        region_name = get_region_url_from_system_id(self._data['solarSystemID'])
+        system_name = get_system_url_from_id(self._data['solarsystemID'])
+        region_name = get_region_url_from_system_id(self._data['solarsystemID'])
         structure_type = get_item_name_from_id(self._data['typeID'])
         footer = footer_from_notification(self._notification)
 
@@ -553,10 +553,10 @@ class MercenaryDenAttacked(NotificationPing):
     """
 
     def build_ping(self):
-        system = get_system_from_id(self._data['solarSystemID'])
+        system = get_system_from_id(self._data['solarsystemID'])
         planet_name = get_planet_name_from_id(self._data['planetID'])
-        system_name = get_system_url_from_id(self._data['solarSystemID'])
-        region_name = get_region_url_from_system_id(self._data['solarSystemID'])
+        system_name = get_system_url_from_id(self._data['solarsystemID'])
+        region_name = get_region_url_from_system_id(self._data['solarsystemID'])
         structure_type = get_item_name_from_id(self._data['typeID'])
         footer = footer_from_notification(self._notification)
 
@@ -645,10 +645,10 @@ class MercenaryDenReinforced(NotificationPing):
     """
 
     def build_ping(self):
-        system = get_system_from_id(self._data['solarSystemID'])
+        system = get_system_from_id(self._data['solarsystemID'])
         planet_name = get_planet_name_from_id(self._data['planetID'])
-        system_name = get_system_url_from_id(self._data['solarSystemID'])
-        region_name = get_region_url_from_system_id(self._data['solarSystemID'])
+        system_name = get_system_url_from_id(self._data['solarsystemID'])
+        region_name = get_region_url_from_system_id(self._data['solarsystemID'])
         structure_type = get_item_name_from_id(self._data['typeID'])
         footer = footer_from_notification(self._notification)
 

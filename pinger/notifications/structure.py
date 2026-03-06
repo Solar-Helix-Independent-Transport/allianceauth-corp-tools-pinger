@@ -41,8 +41,8 @@ class StructureLostShields(NotificationPing):
     """
 
     def build_ping(self):
-        system = get_system_from_id(self._data['solarSystemID'])
-        system_name = get_system_url_from_id(self._data['solarSystemID'])
+        system = get_system_from_id(self._data['solarsystemID'])
+        system_name = get_system_url_from_id(self._data['solarsystemID'])
         structure_type = get_item_name_from_id(self._data['structureTypeID'])
         structure_name = get_location_name_by_id(
             self._data['structureID'],
@@ -131,8 +131,8 @@ class StructureLostArmor(NotificationPing):
     """
 
     def build_ping(self):
-        system = get_system_from_id(self._data['solarSystemID'])
-        system_name = get_system_url_from_id(self._data['solarSystemID'])
+        system = get_system_from_id(self._data['solarsystemID'])
+        system_name = get_system_url_from_id(self._data['solarsystemID'])
         structure_type = get_item_name_from_id(self._data['structureTypeID'])
         structure_name = get_location_name_by_id(
             self._data['structureID'],
@@ -245,9 +245,9 @@ class StructureUnderAttack(NotificationPing):
             # no mutes move on
             pass
 
-        system = get_system_from_id(self._data['solarSystemID'])
-        system_name = get_system_url_from_id(self._data['solarSystemID'])
-        region_name = get_region_url_from_system_id(self._data['solarSystemID'])
+        system = get_system_from_id(self._data['solarsystemID'])
+        system_name = get_system_url_from_id(self._data['solarsystemID'])
+        region_name = get_region_url_from_system_id(self._data['solarsystemID'])
         structure_type = get_item_name_from_id(self._data['structureTypeID'])
         structure_name = get_location_name_by_id(
             self._data['structureID'],
@@ -398,9 +398,9 @@ class StructureAnchoring(NotificationPing):
     """
 
     def build_ping(self):
-        system = get_system_from_id(self._data['solarSystemID'])
-        system_name = get_system_url_from_id(self._data['solarSystemID'])
-        region_name = get_region_url_from_system_id(self._data['solarSystemID'])
+        system = get_system_from_id(self._data['solarsystemID'])
+        system_name = get_system_url_from_id(self._data['solarsystemID'])
+        region_name = get_region_url_from_system_id(self._data['solarsystemID'])
         structure_type = get_item_name_from_id(self._data['structureTypeID'])
         structure_name = get_location_name_by_id(
             self._data['structureID'],
@@ -465,9 +465,9 @@ class StructureWentLowPower(NotificationPing):
     """
 
     def build_ping(self):
-        system = get_system_from_id(self._data['solarSystemID'])
-        system_name = get_system_url_from_id(self._data['solarSystemID'])
-        region_name = get_region_url_from_system_id(self._data['solarSystemID'])
+        system = get_system_from_id(self._data['solarsystemID'])
+        system_name = get_system_url_from_id(self._data['solarsystemID'])
+        region_name = get_region_url_from_system_id(self._data['solarsystemID'])
         structure_type = get_item_name_from_id(self._data['structureTypeID'])
         structure_name = get_location_name_by_id(
             self._data['structureID'],
@@ -533,9 +533,9 @@ class StructureWentHighPower(NotificationPing):
     """
 
     def build_ping(self):
-        system = get_system_from_id(self._data['solarSystemID'])
-        system_name = get_system_url_from_id(self._data['solarSystemID'])
-        region_name = get_region_url_from_system_id(self._data['solarSystemID'])
+        system = get_system_from_id(self._data['solarsystemID'])
+        system_name = get_system_url_from_id(self._data['solarsystemID'])
+        region_name = get_region_url_from_system_id(self._data['solarsystemID'])
         structure_type = get_item_name_from_id(self._data['structureTypeID'])
         structure_name = get_location_name_by_id(
             self._data['structureID'],
@@ -607,9 +607,9 @@ class StructureUnanchoring(NotificationPing):
     """
 
     def build_ping(self):
-        system = get_system_from_id(self._data['solarSystemID'])
-        system_name = get_system_url_from_id(self._data['solarSystemID'])
-        region_name = get_region_url_from_system_id(self._data['solarSystemID'])
+        system = get_system_from_id(self._data['solarsystemID'])
+        system_name = get_system_url_from_id(self._data['solarsystemID'])
+        region_name = get_region_url_from_system_id(self._data['solarsystemID'])
         structure_type = get_item_name_from_id(self._data['structureTypeID'])
         structure_name = get_location_name_by_id(
             self._data['structureID'],
@@ -693,9 +693,9 @@ class StructureDestroyed(NotificationPing):
     """
 
     def build_ping(self):
-        system = get_system_from_id(self._data['solarSystemID'])
-        system_name = get_system_url_from_id(self._data['solarSystemID'])
-        region_name = get_region_url_from_system_id(self._data['solarSystemID'])
+        system = get_system_from_id(self._data['solarsystemID'])
+        system_name = get_system_url_from_id(self._data['solarsystemID'])
+        region_name = get_region_url_from_system_id(self._data['solarsystemID'])
         structure_type = get_item_name_from_id(self._data['structureTypeID'])
         structure_name = get_location_name_by_id(
             self._data['structureID'],
@@ -791,9 +791,9 @@ class StructureNoReagentsAlert(NotificationPing):
     """
 
     def build_ping(self):
-        system = get_system_from_id(self._data['solarSystemID'])
-        system_name = get_system_url_from_id(self._data['solarSystemID'])
-        region_name = get_region_url_from_system_id(self._data['solarSystemID'])
+        system = get_system_from_id(self._data['solarsystemID'])
+        system_name = get_system_url_from_id(self._data['solarsystemID'])
+        region_name = get_region_url_from_system_id(self._data['solarsystemID'])
         structure_type = get_item_name_from_id(self._data['structureTypeID'])
         structure_name = get_location_name_by_id(
             self._data['structureID'],
@@ -860,9 +860,9 @@ class StructureLowReagentsAlert(NotificationPing):
     """
 
     def build_ping(self):
-        system = get_system_from_id(self._data['solarSystemID'])
-        system_name = get_system_url_from_id(self._data['solarSystemID'])
-        region_name = get_region_url_from_system_id(self._data['solarSystemID'])
+        system = get_system_from_id(self._data['solarsystemID'])
+        system_name = get_system_url_from_id(self._data['solarsystemID'])
+        region_name = get_region_url_from_system_id(self._data['solarsystemID'])
         structure_type = get_item_name_from_id(self._data['structureTypeID'])
         structure_name = get_location_name_by_id(
             self._data['structureID'],
