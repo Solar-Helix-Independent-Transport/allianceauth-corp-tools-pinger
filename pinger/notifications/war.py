@@ -1,8 +1,4 @@
-from corptools import models as ctm
-
 from django.utils.html import strip_tags
-
-from allianceauth.eveonline.evelinks import eveimageserver
 
 from pinger.notifications.helpers import (
     filter_from_notification, footer_from_notification, get_eve_name_by_id,
