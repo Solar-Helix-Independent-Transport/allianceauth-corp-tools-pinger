@@ -53,7 +53,7 @@ typeID: 1
         )
         self.assertEqual(
             note["fields"][3],
-            {"name": "Owner", "value": self.corp1t, "inline": False}
+            {"name": "Owner", "value": self.corp1.corporation_name, "inline": False}
         )
         self.assertEqual(
             note["fields"][5],
@@ -110,7 +110,7 @@ typeID: 1
         )
         self.assertEqual(
             note["fields"][3],
-            {"name": "Owner", "value": self.corp1t, "inline": False}
+            {"name": "Owner", "value": self.corp1.corporation_name, "inline": False}
         )
         self.assertEqual(
             note["fields"][4],

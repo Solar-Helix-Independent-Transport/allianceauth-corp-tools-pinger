@@ -1,12 +1,10 @@
 import datetime
 import json
 
-from corptools.models import (
-    EveItemType, EveName, MapConstellation, MapRegion, MapSystem,
-    MapSystemPlanet,
-)
+from corptools.models import EveName
 from corptools.task_helpers import sanitize_notification_type
 from corptools.tests import CorptoolsTestCase
+from eve_sde.models import Constellation, ItemType, Planet, Region, SolarSystem
 
 from django.utils import timezone
 
@@ -43,8 +41,8 @@ class PingerTests(CorptoolsTestCase):
                 cls.eveName1.eve_id
             )
 
-        cls.typeName = EveItemType.objects.create(
-            type_id=1,
+        cls.typeName = ItemType.objects.create(
+            id=1,
             name="Item Type 1",
             published=True
         )
@@ -58,21 +56,21 @@ class PingerTests(CorptoolsTestCase):
             cls.corp1.corporation_id
         )
 
-        cls.region = MapRegion.objects.create(
-            region_id=1,
+        cls.region = Region.objects.create(
+            id=1,
             name="Region 1"
         )
         cls.r1t = f"[Region 1](https://evemaps.dotlan.net/map/Region_1)"
 
-        cls.constellation = MapConstellation.objects.create(
-            constellation_id=1,
+        cls.constellation = Constellation.objects.create(
+            id=1,
             name="Constellation 1",
             region=cls.region
         )
         cls.c1t = f"[Constellation 1](https://evemaps.dotlan.net/constellation/Constellation_1)"
 
-        cls.system = MapSystem.objects.create(
-            system_id=1,
+        cls.system = SolarSystem.objects.create(
+            id=1,
             name="System 1",
             security_status=0.0,
             x=0,
@@ -82,15 +80,15 @@ class PingerTests(CorptoolsTestCase):
         )
         cls.s1t = f"[System 1](https://evemaps.dotlan.net/system/System_1)"
 
-        cls.planet = MapSystemPlanet.objects.create(
-            planet_id=1,
+        cls.planet = Planet.objects.create(
+            id=1,
             name="Planet 1",
             x=0,
             y=0,
             z=0,
-            system=cls.system
+            solar_system=cls.system
         )
-        cls.p1t = f"[Planet 1](https://evemaps.dotlan.net/system/System_1)"
+        cls.p1t = f"[System 1](https://evemaps.dotlan.net/system/System_1) - Planet 1"
 
     def _build_notification(self, notification_type, notificaiton_text):
 

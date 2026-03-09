@@ -658,12 +658,12 @@ class MercenaryDenReinforced(NotificationPing):
         tile_till = format_timedelta(_refTimeDelta)
 
         title = "Merc Den Reinforced"
-        body = f"{structure_type.name} has lost its Shields"
+        body = f"{structure_type} has lost its Shields"
 
         fields = [
             {
                 'name': 'System/Planet',
-                'value': system_name,
+                'value': f"{system_name} - {planet_name}",
                 'inline': True
             },
             {
