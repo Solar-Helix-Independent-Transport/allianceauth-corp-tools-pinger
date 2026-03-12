@@ -3,16 +3,15 @@ import hashlib
 import json
 import logging
 import time
-from functools import wraps
 from http.cookiejar import http2time
 
 import requests
-from bravado.exception import HTTPError
 from celery import shared_task
 from corptools.models import (
     CharacterAudit, CorpAsset, CorporationAudit, Structure,
 )
 from corptools.task_helpers import sanitize_notification_type
+from corptools.tasks.utils import esi_error_retry
 from oauthlib.oauth2.rfc6749.errors import InvalidGrantError
 
 from django.core.cache import cache
@@ -68,32 +67,6 @@ def get_error_flag():
 
 def clear_error_flag():
     cache.delete("esi_error_timeout")
-
-
-def esi_error_retry(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        _ret = None
-
-        if get_error_flag() >= timezone.now():
-            logger.warning("Hit ESI error limit! will retry tasks!")
-            args[0].retry(countdown=61)
-        else:
-            clear_error_flag()
-        try:
-            _ret = func(*args, **kwargs)
-        except Exception as e:
-            if isinstance(e, (HTTPError)):
-                code = e.status_code
-                if code == 420:
-                    logger.warning(f"Hit ESI error limit! Pausing Tasks! {e}")
-                    set_error_flag(60)
-                    args[0].retry(countdown=61)
-            elif isinstance(e, (OSError)):
-                logger.warning(f"Hit ESI error limit! Pausing Tasks! {e}")
-            raise e
-        return _ret
-    return wrapper
 
 
 def _get_head_id(char_id):
