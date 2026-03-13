@@ -646,7 +646,7 @@ def corporation_notification_update(self, corporation_id):
             character_id=character_id,
             token=token
         ).result(
-            also_return_response=True
+            return_response=True
         )
 
         now = time.mktime(timezone.now().timetuple())
