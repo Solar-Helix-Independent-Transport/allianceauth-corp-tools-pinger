@@ -44,6 +44,7 @@ dynamic = [
 dependencies = [
     "allianceauth>=4",
     "allianceauth-corptools>=2.1.2",
+    "django-eveonline-sde",
 ]
 
 urls.Homepage = "https://github.com/Solar-Helix-Independent-Transport/allianceauth-corp-tools-pinger"
