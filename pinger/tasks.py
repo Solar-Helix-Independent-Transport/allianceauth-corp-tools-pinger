@@ -38,7 +38,7 @@ CACHE_TIME_SECONDS = 10 * 60
 
 TASK_PRIO = 3
 
-LOOK_BACK_HOURS = 6 * 15
+LOOK_BACK_HOURS = 6 #* 15
 
 
 logger = logging.getLogger(__name__)
@@ -668,11 +668,11 @@ def corporation_notification_update(self, corporation_id):
                     0
                 )
                 self.retry(countdown=secs_till_expire + 1)
-            # elif secs_till_expire < 570:
-            #     logger.warning(
-            #         f"PINGER: CACHE: Mid cache cycle {token.character_name}, retrying with next character"
-            #     )
-            #     self.retry(countdown=1)
+            elif secs_till_expire < 570:
+                logger.warning(
+                    f"PINGER: CACHE: Mid cache cycle {token.character_name}, retrying with next character"
+                )
+                self.retry(countdown=1)
 
             _set_last_cache_expire(character_id, next_expire)
 
