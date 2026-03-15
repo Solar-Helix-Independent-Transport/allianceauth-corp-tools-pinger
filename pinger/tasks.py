@@ -3,6 +3,7 @@ import hashlib
 import json
 import logging
 import time
+from datetime import timezone as tz
 from http.cookiejar import http2time
 
 import requests
@@ -21,6 +22,7 @@ from django.utils import timezone
 
 from allianceauth.eveonline.evelinks import eveimageserver
 from allianceauth.services.tasks import QueueOnce
+from esi.exceptions import HTTPNotModified
 from esi.models import Token
 
 from pinger.app_settings import CT_PINGER_VALID_STATES
@@ -36,7 +38,7 @@ CACHE_TIME_SECONDS = 10 * 60
 
 TASK_PRIO = 3
 
-LOOK_BACK_HOURS = 6
+LOOK_BACK_HOURS = 6 * 15
 
 
 logger = logging.getLogger(__name__)
@@ -226,7 +228,7 @@ def corporation_fuel_check(self, corporation_id):
         if not struct.fuel_expires:
             continue  # use the eve notifications
 
-        daysLeft = (struct.fuel_expires - datetime.datetime.now(timezone.utc)).days
+        daysLeft = (struct.fuel_expires - datetime.datetime.now(tz.utc)).days
 
         if daysLeft < 15:
             if 0 <= daysLeft < 2:
@@ -642,69 +644,70 @@ def corporation_notification_update(self, corporation_id):
 
         types = get_available_types()
 
-        _notifs, response = esi_openapi.client.Character.GetCharactersCharacterIdNotifications(
-            character_id=character_id,
-            token=token
-        ).result(
-            return_response=True
-        )
-
-        now = time.mktime(timezone.now().timetuple())
-        next_expire = http2time(response.headers.get('Expires'))
-
-        secs_till_expire = next_expire - now
-        if next_expire == last_expire:
-            logger.info("PINGER: CACHE: Same Cache as last update.")
-        if secs_till_expire < 30:
-            logger.warning(
-                f"PINGER: CACHE: Almost expired cache {token.character_name}, retrying with this character in {secs_till_expire + 1} seconds")
-            _set_cache_data_for_corp(
-                corporation_id,
-                last_character,
-                all_chars_in_corp,
-                0
-            )
-            self.retry(countdown=secs_till_expire + 1)
-        elif secs_till_expire < 570:
-            logger.warning(
-                f"PINGER: CACHE: Mid cache cycle {token.character_name}, retrying with next character"
-            )
-            self.retry(countdown=1)
-
-        _set_last_cache_expire(character_id, next_expire)
-
-        pingable_notifs = []
-        pinged_already = set(
-            list(Ping.objects.values_list("notification_id", flat=True)))
-
-        for n in _notifs:
-            if n.timestamp > CUTTOFF:
-                _t = sanitize_notification_type(n.type)
-                if _t.startswith("unknown"):
-                    logger.warning(
-                        f"PINGER: {corporation_id} Got Notification "
-                        f"{n.notification_id} {n.type} "
-                        f"{n.timestamp}\n\n{n.text}"
-                    )
-                if _t in types.keys():
-                    if n.notification_id not in pinged_already:
-                        n['time'] = datetime.datetime.timestamp(
-                            n.timestamp
-                        )
-                        pingable_notifs.append(vars(n))
-
-        logger.info(
-            f"PINGER: {corporation_id} Pings to process: {len(pingable_notifs)}")
-
-        # did we get any?
         try:
-            process_notifications.apply_async(
-                priority=TASK_PRIO,
-                args=[character_id, pingable_notifs],
-                once={'graceful': False}
+            _notifs, response = esi_openapi.client.Character.GetCharactersCharacterIdNotifications(
+                character_id=character_id,
+                token=token
+            ).result(
+                return_response=True
             )
-        except Exception as e:
-            logger.warning(f"PINGER: {corporation_id} Already Queued process_notifications - {e}")
+
+            now = time.mktime(timezone.now().timetuple())
+            next_expire = http2time(response.headers.get('Expires'))
+
+            secs_till_expire = next_expire - now
+            if next_expire == last_expire:
+                logger.info("PINGER: CACHE: Same Cache as last update.")
+            if secs_till_expire < 30:
+                logger.warning(
+                    f"PINGER: CACHE: Almost expired cache {token.character_name}, retrying with this character in {secs_till_expire + 1} seconds")
+                _set_cache_data_for_corp(
+                    corporation_id,
+                    last_character,
+                    all_chars_in_corp,
+                    0
+                )
+                self.retry(countdown=secs_till_expire + 1)
+            # elif secs_till_expire < 570:
+            #     logger.warning(
+            #         f"PINGER: CACHE: Mid cache cycle {token.character_name}, retrying with next character"
+            #     )
+            #     self.retry(countdown=1)
+
+            _set_last_cache_expire(character_id, next_expire)
+
+            pingable_notifs = []
+            pinged_already = set(
+                list(Ping.objects.values_list("notification_id", flat=True)))
+
+            for n in _notifs:
+                if n.timestamp > CUTTOFF:
+                    _t = sanitize_notification_type(n.type)
+                    if _t.startswith("unknown"):
+                        logger.warning(
+                            f"PINGER: {corporation_id} Got Notification "
+                            f"{n.notification_id} {n.type} "
+                            f"{n.timestamp}\n\n{n.text}"
+                        )
+                    if _t in types.keys():
+                        if n.notification_id not in pinged_already:
+                            pingable_notifs.append(vars(n))
+
+            logger.info(
+                f"PINGER: {corporation_id} Pings to process: {len(pingable_notifs)}")
+
+            # did we get any?
+            try:
+                process_notifications.apply_async(
+                    priority=TASK_PRIO,
+                    args=[character_id, pingable_notifs],
+                    once={'graceful': False}
+                )
+            except Exception as e:
+                logger.warning(f"PINGER: {corporation_id} Already Queued process_notifications - {e}")
+        except HTTPNotModified:
+            # Nothing new cycle to next
+            pass
 
         _, _, min_delay = get_settings()
 
@@ -747,19 +750,23 @@ def process_notifications(self, cid, notifs):
     for note in notifs:
         if not isinstance(note['timestamp'], datetime.datetime):
             note['timestamp'] = datetime.datetime.fromtimestamp(
-                note.get('time'), tz=datetime.timezone.utc)
+                note.get('timestamp'),
+                tz=tz.utc
+            )
         if note.get('timestamp') > CUTTOFF:
             if note.get('type').startswith("unknown"):
                 logger.info(
                     f"PINGER: {char.character.corporation_id} {cid} Got Notification {note.get('notification_id')} {note.get('type')} {note.get('timestamp')}\n\n{note.get('text')}")
             logger.info(f"PINGER: {char.character.corporation_id} {cid} Found: {note}")
-            n = Notification(character=char,
-                             notification_id=note.get(
-                                 'notification_id'),
-                             timestamp=note.get('timestamp'),
-                             notification_type=sanitize_notification_type(
-                                 note.get('type')),
-                             notification_text=note.get('text'))
+            n = Notification(
+                character=char,
+                notification_id=note.get('notification_id'),
+                timestamp=note.get('timestamp'),
+                notification_type=sanitize_notification_type(
+                    note.get('type')
+                ),
+                notification_text=note.get('text')
+            )
             new_notifs.append(n)
 
     pings = {}
@@ -774,7 +781,12 @@ def process_notifications(self, cid, notifs):
             pinged_already.add(n.notification_id)
             try:
                 _t = n.notification_type.replace(
-                    " ", "").replace("(", "").replace(")", "")
+                    " ", ""
+                ).replace(
+                    "(", ""
+                ).replace(
+                    ")", ""
+                )
                 note = types[_t](n)
                 if _t not in pings:
                     pings[_t] = []
@@ -790,7 +802,7 @@ def process_notifications(self, cid, notifs):
             .prefetch_related("alliance_filter", "corporation_filter", "region_filter")
 
         for hook in webhooks:
-            regions = hook.region_filter.all().values_list("region_id", flat=True)
+            regions = hook.region_filter.all().values_list("id", flat=True)
             alliances = hook.alliance_filter.all().values_list("alliance_id", flat=True)
             corporations = hook.corporation_filter.all(
             ).values_list("corporation_id", flat=True)

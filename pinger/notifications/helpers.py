@@ -141,7 +141,7 @@ def filter_from_notification(notification, system: sdem.SolarSystem = None):
 
 
 def get_eve_name_by_id(eve_id):
-    _en = ctm.EveName.objects.get_or_create_from_esi(eve_id)[0].name
+    _en = ctm.EveName.objects.get_or_create_from_esi(eve_id)[0]
     return _en
 
 

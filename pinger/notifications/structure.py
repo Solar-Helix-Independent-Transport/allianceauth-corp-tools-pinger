@@ -265,14 +265,15 @@ class StructureUnderAttack(NotificationPing):
         attacking_char = get_eve_name_by_id(self._data['charID'])
 
         attackerStr = (
-            f"*[{attacking_char.name}]({zkillboard.character_url(attacking_char.eve_id)})*",
-            f", [{attacking_char.corporation.name}]({zkillboard.corporation_url(attacking_char.corporation.eve_id)})" if attacking_char.corporation else "",
-            f", **[{attacking_char.alliance.name}]({zkillboard.alliance_url(attacking_char.alliance.eve_id)})**" if attacking_char.alliance else "",
+            f"*[{attacking_char.name}]({zkillboard.character_url(attacking_char.eve_id)})*"
+            f", [{self._data['corpName']}]({zkillboard.corporation_url(self._data['corpLinkData'][2])})"
         )
+        if self._data.get('allianceName'):
+            attackerStr += f", **[{self._data['allianceName']}]({zkillboard.corporation_url(self._data['allianceID'])})**"
 
         fields = [{'name': 'System', 'value': system_name, 'inline': True},
                   {'name': 'Region', 'value': region_name, 'inline': True},
-                  {'name': 'Type', 'value': structure_type.name, 'inline': True},
+                  {'name': 'Type', 'value': structure_type, 'inline': True},
                   {'name': 'Attacker', 'value': attackerStr, 'inline': False}]
 
         self.package_ping(
@@ -324,9 +325,9 @@ class OwnershipTransferred(NotificationPing):
 
         title = "Structure Transfered"
 
-        originator, _ = get_eve_name_by_id(self._data['charID'])
-        new_owner, _ = get_eve_name_by_id(self._data['newOwnerCorpID'])
-        old_owner, _ = get_eve_name_by_id(self._data['oldOwnerCorpID'])
+        originator = get_eve_name_by_id(self._data['charID'])
+        new_owner = get_eve_name_by_id(self._data['newOwnerCorpID'])
+        old_owner = get_eve_name_by_id(self._data['oldOwnerCorpID'])
 
         body = "Structure Transfered from %s to %s" % (old_owner, new_owner)
 
@@ -355,7 +356,7 @@ class OwnershipTransferred(NotificationPing):
                 'inline': True},
             {
                 'name': 'Originator',
-                'value': originator,
+                'value': originator.name,
                 'inline': True
             }
         ]

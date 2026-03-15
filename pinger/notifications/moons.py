@@ -315,8 +315,8 @@ class MoonminingExtractionStarted(NotificationPing):
         fields = [
             {'name': 'Structure', 'value': structure_name, 'inline': True},
             {'name': 'System', 'value': system_name, 'inline': True},
-            {'name': 'Moon', 'value': moon.name, 'inline': True},
-            {'name': 'Type', 'value': structure_type.name, 'inline': True},
+            {'name': 'Moon', 'value': moon, 'inline': True},
+            {'name': 'Type', 'value': structure_type, 'inline': True},
             {'name': 'Ready Time', 'value': ready_time.strftime(
                 "%Y-%m-%d %H:%M"), 'inline': False},
             {'name': 'Auto Fire', 'value': auto_time.strftime(
