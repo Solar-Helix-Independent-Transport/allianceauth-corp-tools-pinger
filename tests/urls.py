@@ -1,5 +1,6 @@
-import allianceauth.urls
 from django.urls import path
+
+import allianceauth.urls
 
 from . import views
 

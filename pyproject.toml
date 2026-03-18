@@ -33,6 +33,8 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: Implementation :: CPython",
     "Topic :: Internet :: WWW/HTTP",
     "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
@@ -46,13 +48,12 @@ dependencies = [
     "allianceauth-corptools>=3.0.0b6",
     "django-eveonline-sde",
 ]
-
 urls.Homepage = "https://github.com/Solar-Helix-Independent-Transport/allianceauth-corp-tools-pinger"
 urls.Source = "https://github.com/Solar-Helix-Independent-Transport/allianceauth-corp-tools-pinger"
 urls.Tracker = "https://github.com/Solar-Helix-Independent-Transport/allianceauth-corp-tools-pinger/issues"
 
-[tool.flit.module]
-name = "pinger"
+[tool.flit]
+module.name = "pinger"
 
 [tool.isort]
 profile = "django"
@@ -73,7 +74,7 @@ skip_gitignore = true
 exclude = [ ".git", "*migrations*", ".tox", "dist", "htmlcov" ]
 max-line-length = 119
 select = [ "C", "E", "F", "W", "B", "B950" ]
-ignore = [ 'E203', 'E231', 'E501', 'W503', 'W291', 'W293' ]
+ignore = [ "E203", "E231", "E501", "W503", "W291", "W293" ]
 
 [tool.djlint]
 max_attribute_length = 119
