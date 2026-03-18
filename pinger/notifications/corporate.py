@@ -89,10 +89,13 @@ class CorpAppInvitedMsg(NotificationPing):
         fields = [
             {
                 'name': 'Character',
-                'value': f"[{app_char}]({evewho.character_url(app_char.eve_id)})", 'inline': True},
-            {'name': 'Invoking Character',
+                'value': f"[{app_char}]({evewho.character_url(app_char.eve_id)})",
+                'inline': True
+            },
+            {
                 'name': 'Invoking Character',
-                'value': invoked_by.name, 'inline': True
+                'value': invoked_by.name,
+                'inline': True
              },
             {
                 'name': 'Corporation',
