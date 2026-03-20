@@ -15,7 +15,7 @@ def check_notes(test, note):
     )
     test.assertEqual(
         note["fields"][1],
-        {"name": "Corporation", "value": test.eveName2.name, "inline": True}
+        {"name": "Corporation", "value": test.eveName2CorporationLinkZkillboard, "inline": True}
     )
     test.assertEqual(
         note["fields"][2],

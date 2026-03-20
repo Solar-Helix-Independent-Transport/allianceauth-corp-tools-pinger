@@ -58,6 +58,11 @@ class PingerTests(CorptoolsTestCase):
                 cls.eveName1.name,
                 cls.eveName1.eve_id
             )
+        cls.eveName2CorporationLinkZkillboard = "[%s](https://zkillboard.com/corporation/%s/)" % \
+            (
+                cls.eveName2.name,
+                cls.eveName2.eve_id
+            )
         cls.eveName1linkewho = "[%s](https://evewho.com/character/%s)" % \
             (
                 cls.eveName1.name,
