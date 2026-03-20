@@ -1,16 +1,14 @@
-from django.contrib import admin
+import json
+import logging
 
-from . import models
-
-from .models import DiscordWebhook
+import requests
 
 from django.conf import settings
-import requests
-import json
-from django.contrib import messages
-
+from django.contrib import admin, messages
 from django.utils.html import format_html
-import logging
+
+from . import models
+from .models import DiscordWebhook
 
 logger = logging.getLogger(__name__)
 
@@ -185,6 +183,9 @@ class DiscordWebhookAdmin(admin.ModelAdmin):
             )
         return result
 
+    @admin.display(
+        description='Type Filter'
+    )
     def _types(self, obj):
         my_types = [x.name for x in obj.ping_types.order_by('name')]
 
@@ -192,8 +193,10 @@ class DiscordWebhookAdmin(admin.ModelAdmin):
             my_types,
             10
         )
-    _types.short_description = 'Type Filter'
 
+    @admin.display(
+        description='Region Filter'
+    )
     def _regions(self, obj):
         my_regions = [x.name for x in obj.region_filter.order_by('name')]
 
@@ -201,8 +204,10 @@ class DiscordWebhookAdmin(admin.ModelAdmin):
             my_regions,
             10
         )
-    _regions.short_description = 'Region Filter'
 
+    @admin.display(
+        description='Corporation Filter'
+    )
     def _corps(self, obj):
         my_corps = [x.corporation_name for x in obj.corporation_filter.order_by(
             'corporation_name')]
@@ -211,8 +216,10 @@ class DiscordWebhookAdmin(admin.ModelAdmin):
             my_corps,
             10
         )
-    _corps.short_description = 'Corporation Filter'
 
+    @admin.display(
+        description='Alliance Filter'
+    )
     def _allis(self, obj):
         my_allis = [
             x.alliance_name for x in obj.alliance_filter.order_by('alliance_name')]
@@ -221,7 +228,6 @@ class DiscordWebhookAdmin(admin.ModelAdmin):
             my_allis,
             10
         )
-    _allis.short_description = 'Alliance Filter'
 
     list_display = ['nickname', '_types', 'fuel_pings',
                     'lo_pings', '_regions', '_corps', '_allis']
@@ -263,6 +269,9 @@ class SettingsAdmin(admin.ModelAdmin):
             )
         return result
 
+    @admin.display(
+        description='Corporation Limiter'
+    )
     def _corps(self, obj):
         my_corps = [x.corporation_name for x in obj.CorporationLimiter.order_by(
             'corporation_name')]
@@ -271,8 +280,10 @@ class SettingsAdmin(admin.ModelAdmin):
             my_corps,
             10
         )
-    _corps.short_description = 'Corporation Limiter'
 
+    @admin.display(
+        description='Alliance Limiter'
+    )
     def _allis(self, obj):
         my_allis = [
             x.alliance_name for x in obj.AllianceLimiter.order_by('alliance_name')]
@@ -281,7 +292,6 @@ class SettingsAdmin(admin.ModelAdmin):
             my_allis,
             10
         )
-    _allis.short_description = 'Alliance Limiter'
 
     list_display = ['__str__', '_corps', '_allis',
                     "min_time_between_updates", "discord_mute_channels"]

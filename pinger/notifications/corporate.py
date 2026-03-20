@@ -1,7 +1,7 @@
 
 from django.utils.html import strip_tags
 
-from allianceauth.eveonline.evelinks import evewho
+from allianceauth.eveonline.evelinks import evewho, zkillboard
 
 from pinger.notifications.helpers import (
     filter_from_notification, footer_from_notification, get_eve_name_by_id,
@@ -39,7 +39,7 @@ class CorpAppAcceptMsg(NotificationPing):
             },
             {
                 'name': 'Corporation',
-                'value': app_corp.name,
+                'value': f"[{app_corp.name}]({zkillboard.corporation_url(self._data['corpID'])})",
                 'inline': True
             },
             {
@@ -93,7 +93,7 @@ class CorpAppInvitedMsg(NotificationPing):
             },
             {
                 'name': 'Corporation',
-                'value': app_corp.name,
+                'value': f"[{app_corp.name}]({zkillboard.corporation_url(self._data['corpID'])})",
                 'inline': True
             },
             {
@@ -149,7 +149,7 @@ class CorpAppNewMsg(NotificationPing):
                 'inline': True},
             {
                 'name': 'Corporation',
-                'value': app_corp.name,
+                'value': f"[{app_corp.name}]({zkillboard.corporation_url(self._data['corpID'])})",
                 'inline': True
             },
             {
@@ -202,7 +202,7 @@ class CorpAppRejectMsg(NotificationPing):
             },
             {
                 'name': 'Corporation',
-                'value': app_corp.name,
+                'value': f"[{app_corp.name}]({zkillboard.corporation_url(self._data['corpID'])})",
                 'inline': True
             },
             {

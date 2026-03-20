@@ -1,5 +1,6 @@
-from allianceauth.services.hooks import UrlHook
 from allianceauth import hooks
+from allianceauth.services.hooks import UrlHook
+
 """from . import urls
 
 @hooks.register('url_hook')
