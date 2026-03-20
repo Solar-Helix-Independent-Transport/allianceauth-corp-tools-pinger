@@ -209,8 +209,8 @@ class MoonminingLaserFired(NotificationPing):
     """
         MoonminingLaserFired Example
 
-        firedBy: 824787891
-        firedByLink: <a href="showinfo:1380//824787891">PoseDamen</a>
+        firedBy: 1
+        firedByLink: <a href="showinfo:1380//824787891">Character 1</a>
         moonID: 40291428
         oreVolumeByType:
             45493: 1983681.4476127427
@@ -237,9 +237,10 @@ class MoonminingLaserFired(NotificationPing):
             structure_name = "Unknown"
 
         title = "Moon Laser Fired!"
-        body = "Fired By [{0}](https://zkillboard.com/search/{1}/)".format(
+        body = "Fired By [{0}](https://zkillboard.com/character/{1}/)".format(
             strip_tags(self._data['firedByLink']),
-            strip_tags(self._data['firedByLink']).replace(" ", "%20"))
+            self._data['firedBy']
+        )
 
         ore_string = ores_to_arrays(self._data['oreVolumeByType'])
 
@@ -303,9 +304,9 @@ class MoonminingExtractionStarted(NotificationPing):
 
         title = "Moon Extraction Started!"
 
-        body = "Fired By [{0}](https://zkillboard.com/search/{1}/)".format(
+        body = "Fired By [{0}](https://zkillboard.com/character/{1}/)".format(
             strip_tags(self._data['startedByLink']),
-            strip_tags(self._data['startedByLink']).replace(" ", "%20"))
+            self._data['startedBy'])
 
         auto_time = filetime_to_dt(self._data['autoTime'])
         ready_time = filetime_to_dt(self._data['readyTime'])

@@ -269,7 +269,7 @@ class StructureUnderAttack(NotificationPing):
             f", [{self._data['corpName']}]({zkillboard.corporation_url(self._data['corpLinkData'][2])})"
         )
         if self._data.get('allianceName'):
-            attackerStr += f", **[{self._data['allianceName']}]({zkillboard.corporation_url(self._data['allianceID'])})**"
+            attackerStr += f", **[{self._data['allianceName']}]({zkillboard.alliance_url(self._data['allianceID'])})**"
 
         fields = [{'name': 'System', 'value': system_name, 'inline': True},
                   {'name': 'Region', 'value': region_name, 'inline': True},
@@ -323,13 +323,13 @@ class OwnershipTransferred(NotificationPing):
 
         structure_name = self._data['structureName']
 
-        title = "Structure Transfered"
+        title = "Structure Transferred"
 
         originator = get_eve_name_by_id(self._data['charID'])
         new_owner = get_eve_name_by_id(self._data['newOwnerCorpID'])
         old_owner = get_eve_name_by_id(self._data['oldOwnerCorpID'])
 
-        body = "Structure Transfered from %s to %s" % (old_owner, new_owner)
+        body = "Structure Transferred from %s to %s" % (old_owner, new_owner)
 
         fields = []
         if len(structure_name) > 0:
@@ -345,15 +345,18 @@ class OwnershipTransferred(NotificationPing):
             {
                 'name': 'System',
                 'value': system_name,
-                'inline': True},
+                'inline': True
+            },
             {
                 'name': 'Region',
                 'value': region_name,
-                'inline': True},
+                'inline': True
+            },
             {
                 'name': 'Type',
                 'value': structure_type,
-                'inline': True},
+                'inline': True
+            },
             {
                 'name': 'Originator',
                 'value': originator.name,
@@ -724,7 +727,12 @@ class StructureDestroyed(NotificationPing):
             },
             {
                 'name': 'Type',
-                'value': structure_type.name,
+                'value': structure_type,
+                'inline': True
+            },
+            {
+                'name': 'Abandoned',
+                'value': "Yes" if self._data['isAbandoned'] else "No",
                 'inline': True
             },
         ]
@@ -824,7 +832,7 @@ class StructureNoReagentsAlert(NotificationPing):
             },
             {
                 'name': 'Type',
-                'value': structure_type.name,
+                'value': structure_type,
                 'inline': True
             }
         ]
@@ -872,7 +880,7 @@ class StructureLowReagentsAlert(NotificationPing):
         footer = footer_from_notification(self._notification)
 
         title = structure_name
-        body = "Structure Low Reagents!"
+        body = "Structure is Low on Reagents!"
 
         fields = [
             {
@@ -892,7 +900,7 @@ class StructureLowReagentsAlert(NotificationPing):
             },
             {
                 'name': 'Type',
-                'value': structure_type.name,
+                'value': structure_type,
                 'inline': True
             }
         ]

@@ -89,14 +89,8 @@ class CorpAppInvitedMsg(NotificationPing):
         fields = [
             {
                 'name': 'Character',
-                'value': f"[{app_char.name}]({evewho.character_url(app_char.eve_id)})",
-                'inline': True
+                'value': f"[{app_char}]({evewho.character_url(app_char.eve_id)})", 'inline': True
             },
-            {
-                'name': 'Invoking Character',
-                'value': invoked_by.name,
-                'inline': True
-             },
             {
                 'name': 'Corporation',
                 'value': f"[{app_corp.name}]({zkillboard.corporation_url(self._data['corpID'])})",
@@ -106,7 +100,11 @@ class CorpAppInvitedMsg(NotificationPing):
                 'name': 'Main Character',
                 'value': eve_main,
                 'inline': True
-            }
+            },
+            {
+                'name': 'Invoking Character',
+                'value': invoked_by.name, 'inline': True
+            },
         ]
 
         self.package_ping(

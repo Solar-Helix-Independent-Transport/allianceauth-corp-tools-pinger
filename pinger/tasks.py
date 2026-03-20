@@ -812,17 +812,17 @@ def process_notifications(self, cid, notifs):
 
                 if corp_filter is not None and len(corporations) > 0:
                     if corp_filter not in corporations:
-                        logging.info(f"PINGER: {char.character.corporation_id} {cid} ignroing Ping {p} corp filter")
+                        logger.info(f"PINGER: {char.character.corporation_id} {cid} ignroing Ping {p} corp filter")
                         continue
 
                 if alli_filter is not None and len(alliances) > 0:
                     if alli_filter not in alliances:
-                        logging.info(f"PINGER: {char.character.corporation_id} {cid} ignroing Ping {p} alli filter")
+                        logger.info(f"PINGER: {char.character.corporation_id} {cid} ignroing Ping {p} alli filter")
                         continue
 
                 if region_filter is not None and len(regions) > 0:
                     if region_filter not in regions:
-                        logging.info(
+                        logger.info(
                             f"PINGER: {char.character.corporation_id} {cid} ignroing Ping {p} region filter")
                         continue
 
@@ -833,7 +833,7 @@ def process_notifications(self, cid, notifs):
                     hook=hook,
                     alerting=p.force_at_ping
                 )
-                logging.info(f"PINGER: {char.character.corporation_id} {cid} Sending Ping {ping_ob}")
+                logger.info(f"PINGER: {char.character.corporation_id} {cid} Sending Ping {ping_ob}")
                 ping_ob.send_ping()
                 try:
                     if p.timer:
