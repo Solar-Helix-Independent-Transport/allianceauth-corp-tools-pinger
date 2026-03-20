@@ -9,6 +9,8 @@ from eve_sde.models import Constellation, ItemType, Planet, Region, SolarSystem
 
 from django.utils import timezone
 
+from allianceauth.eveonline.evelinks import evewho
+
 from pinger.notifications.base import get_available_types
 from pinger.notifications.helpers import filetime_to_dt
 from pinger.tasks import Notification
@@ -49,6 +51,11 @@ class PingerTests(CorptoolsTestCase):
             category="character"
         )
         cls.eveName1link = "[%s](https://zkillboard.com/character/%s/)" % \
+            (
+                cls.eveName1.name,
+                cls.eveName1.eve_id
+            )
+        cls.eveName1linkewho = "[%s](https://evewho.com/character/%s)" % \
             (
                 cls.eveName1.name,
                 cls.eveName1.eve_id
@@ -105,6 +112,10 @@ class PingerTests(CorptoolsTestCase):
             solar_system=cls.system
         )
         cls.p1t = f"[System 1](https://evemaps.dotlan.net/system/System_1) - Planet 1"
+        cls.ca1text =  (
+            f"[{cls.ca1.character.character_name}]({evewho.character_url(cls.ca1.character.character_id)}) "
+            f"[ [{cls.ca1.character.corporation_ticker}]({evewho.corporation_url(cls.ca1.character.corporation_id)}) ]"
+        )
 
     def _build_notification(self, notification_type, notificaiton_text):
 

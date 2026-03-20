@@ -34,12 +34,12 @@ class CorpAppAcceptMsg(NotificationPing):
         fields = [
             {
                 'name': 'Character',
-                'value': f"[{app_char}]({evewho.character_url(self._data['charID'])})",
+                'value': f"[{app_char.name}]({evewho.character_url(self._data['charID'])})",
                 'inline': True
             },
             {
                 'name': 'Corporation',
-                'value': app_corp,
+                'value': app_corp.name,
                 'inline': True
             },
             {
@@ -89,11 +89,8 @@ class CorpAppInvitedMsg(NotificationPing):
         fields = [
             {
                 'name': 'Character',
-                'value': f"[{app_char}]({evewho.character_url(app_char.eve_id)})", 'inline': True},
-            {'name': 'Invoking Character',
-                'name': 'Invoking Character',
-                'value': invoked_by.name, 'inline': True
-             },
+                'value': f"[{app_char}]({evewho.character_url(app_char.eve_id)})", 'inline': True
+            },
             {
                 'name': 'Corporation',
                 'value': app_corp.name,
@@ -103,7 +100,11 @@ class CorpAppInvitedMsg(NotificationPing):
                 'name': 'Main Character',
                 'value': eve_main,
                 'inline': True
-            }
+            },
+            {
+                'name': 'Invoking Character',
+                'value': invoked_by.name, 'inline': True
+            },
         ]
 
         self.package_ping(
@@ -206,7 +207,7 @@ class CorpAppRejectMsg(NotificationPing):
             },
             {
                 'name': 'Main Character',
-                'value': eve_main.name,
+                'value': eve_main,
                 'inline': True
             }
         ]
