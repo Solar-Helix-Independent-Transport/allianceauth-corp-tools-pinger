@@ -5,7 +5,9 @@ from corptools.models import EveName
 from corptools.models.audits import EveLocation
 from corptools.task_helpers import sanitize_notification_type
 from corptools.tests import CorptoolsTestCase
-from eve_sde.models import Constellation, ItemType, Planet, Region, SolarSystem
+from eve_sde.models import (
+    Constellation, ItemType, Moon, Planet, Region, SolarSystem,
+)
 
 from django.utils import timezone
 
@@ -25,6 +27,7 @@ class PingerTests(CorptoolsTestCase):
             EveLocation,
             ItemType,
             Planet,
+            Moon,
             SolarSystem,
             Constellation,
             Region,
@@ -69,6 +72,11 @@ class PingerTests(CorptoolsTestCase):
             name="Item Type 1",
             published=True
         )
+        cls.typeName1 = ItemType.objects.create(
+            id=2,
+            name="Item Type 2",
+            published=True
+        )
         cls.dateTime1Timestamp = 133772899408813831
         cls.dateTime1 = filetime_to_dt(
             cls.dateTime1Timestamp
@@ -102,7 +110,15 @@ class PingerTests(CorptoolsTestCase):
             constellation=cls.constellation
         )
         cls.s1t = f"[System 1](https://evemaps.dotlan.net/system/System_1)"
-
+        cls.moon = Moon.objects.create(
+            id=1,
+            name="Moon 1",
+            x=0,
+            y=0,
+            z=0,
+            solar_system=cls.system
+        )
+        cls.m1t = f"[System 1](https://evemaps.dotlan.net/system/System_1) - Planet 1"
         cls.planet = Planet.objects.create(
             id=1,
             name="Planet 1",
