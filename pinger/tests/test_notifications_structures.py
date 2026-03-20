@@ -107,14 +107,14 @@ allianceLinkData:
 - 30
 - 500010
 allianceName: Guristas Pirates
-armorPercentage: 100.0
+armorPercentage: 84.5555
 charID: 1
 corpLinkData:
 - showinfo
 - 2
 - 1000127
 corpName: Guristas
-hullPercentage: 100.0
+hullPercentage: 75.4444
 shieldPercentage: 94.88716147275748
 solarsystemID: 1
 structureID: &id001 12345678
@@ -135,7 +135,7 @@ structureTypeID: 1
         )
         self.assertEqual(
             note["description"],
-            f"Structure under Attack!\n[ S: {94.887:.2f}% A: {100:.2f}% H: {100:.2f}% ]"
+            f"Structure under Attack!\n[ S: {94.887:.2f}% A: {84.5555:.2f}% H: {75.4444:.2f}% ]"
         )
         self.assertEqual(
             note["fields"][0],
