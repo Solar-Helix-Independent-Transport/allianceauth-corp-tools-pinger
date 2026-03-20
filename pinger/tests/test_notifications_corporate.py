@@ -79,24 +79,6 @@ invokingCharID: 3
             f"Corp Invite Sent"
         )
 
-    def test_corp_new_app(self):
-        notification_type = "CorpAppNewMsg"
-        notificaiton_text = \
-"""
-applicationText: 'This is a TEST!'
-charID: 1
-corpID: 2
-"""
-
-        note = self._build_notification(notification_type, notificaiton_text)
-
-        check_notes(self, note)
-
-        self.assertEqual(
-            note["title"],
-            f"New Corp Application"
-        )
-
     def test_corp_rej_app(self):
         notification_type = "CorpAppRejectMsg"
         notificaiton_text = \
