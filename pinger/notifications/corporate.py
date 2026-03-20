@@ -196,17 +196,17 @@ class CorpAppRejectMsg(NotificationPing):
         fields = [
             {
                 'name': 'Character',
-                'value': f"[{app_char}]({evewho.character_url(app_char.eve_id)})",
+                'value': f"[{app_char.name}]({evewho.character_url(app_char.eve_id)})",
                 'inline': True
             },
             {
                 'name': 'Corporation',
-                'value': app_corp,
+                'value': app_corp.name,
                 'inline': True
             },
             {
                 'name': 'Main Character',
-                'value': eve_main,
+                'value': eve_main.name,
                 'inline': True
             }
         ]

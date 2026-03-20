@@ -2,6 +2,7 @@ import datetime
 import json
 
 from corptools.models import EveName
+from corptools.models.audits import EveLocation
 from corptools.task_helpers import sanitize_notification_type
 from corptools.tests import CorptoolsTestCase
 from eve_sde.models import Constellation, ItemType, Planet, Region, SolarSystem
@@ -17,6 +18,18 @@ class PingerTests(CorptoolsTestCase):
 
     def setUp(cls):
         super().setUp()
+        clear_models = [
+            EveName,
+            EveLocation,
+            ItemType,
+            Planet,
+            SolarSystem,
+            Constellation,
+            Region,
+        ]
+        for m in clear_models:
+            m.objects.all().delete()
+
         cls.eveName3 = EveName.objects.create(
             eve_id=3,
             name="Alli 3",
@@ -40,7 +53,10 @@ class PingerTests(CorptoolsTestCase):
                 cls.eveName1.name,
                 cls.eveName1.eve_id
             )
-
+        cls.eveLoc1 = EveLocation.objects.create(
+            location_id=12345678,
+            location_name="Test Structure 1"
+        )
         cls.typeName = ItemType.objects.create(
             id=1,
             name="Item Type 1",
