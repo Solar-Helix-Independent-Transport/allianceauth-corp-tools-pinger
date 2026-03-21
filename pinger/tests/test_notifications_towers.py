@@ -4,7 +4,7 @@ from allianceauth.eveonline.evelinks import zkillboard
 from . import PingerTests
 
 
-class TestStructures(PingerTests):
+class TestStarbases(PingerTests):
 
     def test_str_tower(self):
         notification_type = "TowerAlertMsg"
