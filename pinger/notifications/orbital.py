@@ -14,7 +14,7 @@ from .helpers import (
     footer_from_notification, format_timedelta, get_attacker_string,
     get_eve_name_by_id, get_item_name_from_id, get_planet_name_from_id,
     get_region_url_from_system_id, get_system_from_id, get_system_url_from_id,
-    time_till_to_td, timers_enabled,
+    time_till_out, time_till_to_td, timers_enabled,
 )
 
 logger = logging.getLogger(__name__)
@@ -121,13 +121,13 @@ class OrbitalReinforced(NotificationPing):
         _refTimeDelta = _timeTill - timezone.now()
         tile_till = format_timedelta(_refTimeDelta)
 
-        title = "Poco Reinforced"
+        title = "Skyhook Reinforced"
         body = f"{structure_type} has lost its Shields"
 
         fields = [
             {
-                'name': 'System',
-                'value': system_name,
+                'name': 'System/Planet',
+                'value': f"{system_name} - {planet_name}",
                 'inline': True
             },
             {
@@ -307,13 +307,13 @@ class SkyhookLostShields(NotificationPing):
         _refTimeDelta = _timeTill - timezone.now()
         tile_till = format_timedelta(_refTimeDelta)
 
-        title = "Poco Reinforced"
+        title = "Skyhook Reinforced"
         body = f"{structure_type} has lost its Shields"
 
         fields = [
             {
-                'name': 'System',
-                'value': system_name,
+                'name': 'System/Planet',
+                'value': f"{system_name} - {planet_name}",
                 'inline': True
             },
             {
@@ -409,13 +409,8 @@ class SkyhookOnline(NotificationPing):
 
         fields = [
             {
-                'name': 'Planet',
-                'value': planet_name,
-                'inline': True
-            },
-            {
-                'name': 'System',
-                'value': system_name,
+                'name': 'System/Planet',
+                'value': f"{system_name} - {planet_name}",
                 'inline': True
             },
             {
@@ -477,9 +472,10 @@ class SkyhookDeployed(NotificationPing):
         region_name = get_region_url_from_system_id(self._data['solarsystemID'])
         structure_type = get_item_name_from_id(self._data['typeID'])
         footer = footer_from_notification(self._notification)
+        tile_till, out_date_time = time_till_out(self._data['timeLeft'], self._notification)
 
-        title = "Skyhook Online"
-        body = "{} - {} - {} Online".format(
+        title = "Skyhook Deployed"
+        body = "{} - {} - {} Deployed".format(
             system_name,
             region_name,
             planet_name
@@ -487,13 +483,8 @@ class SkyhookDeployed(NotificationPing):
 
         fields = [
             {
-                'name': 'Planet',
-                'value': planet_name,
-                'inline': True
-            },
-            {
-                'name': 'System',
-                'value': system_name,
+                'name': 'System/Planet',
+                'value': f"{system_name} - {planet_name}",
                 'inline': True
             },
             {
@@ -505,7 +496,18 @@ class SkyhookDeployed(NotificationPing):
                 'name': 'Type',
                 'value': structure_type,
                 'inline': True
+            },
+            {
+                'name': 'Time Till Out',
+                'value': tile_till,
+                'inline': False
+            },
+            {
+                'name': 'Date Out',
+                'value': out_date_time.strftime("%Y-%m-%d %H:%M"),
+                'inline': False
             }
+
         ]
 
         self.package_ping(

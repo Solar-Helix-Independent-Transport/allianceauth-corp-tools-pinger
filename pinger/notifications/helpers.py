@@ -164,11 +164,11 @@ def get_attacker_string(char_id, corp_id, alli_id=None):
     attacking_alli = None
     if alli_id:
         attacking_alli = get_eve_name_by_id(alli_id)
-    return (
+    return "".join([
         f"*[{attacking_char.name}]({zkillboard.character_url(attacking_char.eve_id)})*",
-        f"[{attacking_corp.name}]({zkillboard.corporation_url(attacking_corp.eve_id)})",
-        f"**[{attacking_alli.name}]({zkillboard.alliance_url(attacking_alli.eve_id)})**" if attacking_alli else ""
-    )
+        f", [{attacking_corp.name}]({zkillboard.corporation_url(attacking_corp.eve_id)})",
+        f", **[{attacking_alli.name}]({zkillboard.alliance_url(attacking_alli.eve_id)})**" if attacking_alli else ""
+    ])
 
 
 def get_timer_enum(timer_type):

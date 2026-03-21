@@ -22,6 +22,7 @@ class PingerTests(CorptoolsTestCase):
 
     def setUp(cls):
         super().setUp()
+        cls.maxDiff = None
         clear_models = [
             EveName,
             EveLocation,
