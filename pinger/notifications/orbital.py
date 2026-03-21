@@ -230,11 +230,18 @@ class SkyhookUnderAttack(NotificationPing):
         structure_type = get_item_name_from_id(self._data['typeID'])
         footer = footer_from_notification(self._notification)
 
+        attackerStr = get_attacker_string(
+            self._data['charID'],
+            self._data['corpLinkData'][2],
+            self._data['allianceID']
+        )
+
+
         title = "Skyhook Under Attack"
 
-        body = "{} - {} under Attack!\nS: {:.2f}% A: {:.2f}, H: {:.2f}".format(
+        body = "{} - {} under Attack!\nS: {:.2f}%, A: {:.2f}%, H: {:.2f}%".format(
             structure_type,
-            system_name,
+            f"{system_name} - {planet_name}",
             float(self._data['shieldPercentage']),
             float(self._data['armorPercentage']),
             float(self._data['hullPercentage']))
@@ -254,6 +261,11 @@ class SkyhookUnderAttack(NotificationPing):
                 'name': 'Type',
                 'value': structure_type,
                 'inline': True
+            },
+            {
+                'name': 'Attacker',
+                'value': attackerStr,
+                'inline': False
             }
         ]
 

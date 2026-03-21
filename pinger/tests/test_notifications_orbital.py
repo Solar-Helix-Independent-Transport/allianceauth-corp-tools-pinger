@@ -368,3 +368,74 @@ typeID: 1
                 "inline": False
             }
         )
+
+    def test_hook_attack(self):
+        notification_type = "SkyhookUnderAttack"
+        notificaiton_text = \
+"""
+allianceID: 3
+allianceLinkData:
+- showinfo
+- 16159
+- 1900696668
+allianceName: The Initiative.
+armorPercentage: 85.444444
+charID: 1
+corpLinkData:
+- showinfo
+- 5
+- 2
+corpName: Tactically Challenged
+hullPercentage: 75.666666
+isActive: true
+itemID: &id001 1
+planetID: 1
+planetShowInfoData:
+- showinfo
+- 2015
+- 40290676
+shieldPercentage: 94.555555555555
+skyhookShowInfoData:
+- showinfo
+- 81080
+- *id001
+solarsystemID: 1
+typeID: 1
+"""
+
+        note = self._build_notification(notification_type, notificaiton_text)
+
+        self.assertIsNotNone(note)
+
+        self.assertEqual(
+            note["title"],
+            "Skyhook Under Attack"
+        )
+        self.assertEqual(
+            note["description"],
+            f"{self.typeName.name} - {self.p1t} under Attack!\nS: {94.555555555:.2f}%, A: {85.444444444:.2f}%, H: {75.66666666:.2f}%"
+        )
+        self.assertEqual(
+            note["fields"][0],
+            {"name": "System/Planet", "value": self.p1t, "inline": True}
+        )
+        self.assertEqual(
+            note["fields"][1],
+            {"name": "Region", "value": self.r1t, "inline": True}
+        )
+        self.assertEqual(
+            note["fields"][2],
+            {"name": "Type", "value": self.typeName.name, "inline": True}
+        )
+        self.assertEqual(
+            note["fields"][3],
+            {
+                "name": "Attacker",
+                "value": (
+                    f"*[Char 1]({zkillboard.character_url(1)})*"
+                    f", [Corp 2]({zkillboard.corporation_url(2)})"
+                    f", **[Alli 3]({zkillboard.alliance_url(3)})**"
+                ),
+                "inline": False
+            }
+        )
