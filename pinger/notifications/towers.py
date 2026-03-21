@@ -50,7 +50,7 @@ class TowerAlertMsg(NotificationPing):
         system_name = get_system_url_from_id(self._data['solarSystemID'])
         moon = get_moon_name_from_id(self._data['moonID'])
         region_name = get_region_url_from_system_id(self._data['solarSystemID'])
-        structure_type = get_item_name_from_id(self._data['structureTypeID'])
+        structure_type = get_item_name_from_id(self._data['typeID'])
         footer = footer_from_notification(self._notification)
 
         title = "Starbase Under Attack!"
@@ -67,22 +67,24 @@ class TowerAlertMsg(NotificationPing):
         )
 
         fields = [
-            {'name': 'Moon',
-             'value': moon,
-             'inline': True
-             },
+            {
+                'name': 'Moon',
+                'value': moon,
+                'inline': True
+            },
             {
                 'name': 'System',
                 'value': system_name,
                 'inline': True
             },
-            {'name': 'Region',
-             'value': region_name,
-             'inline': True
-             },
+            {
+                'name': 'Region',
+                'value': region_name,
+                'inline': True
+            },
             {
                 'name': 'Type',
-                'value': structure_type.name,
+                'value': structure_type,
                 'inline': True
             },
             {
