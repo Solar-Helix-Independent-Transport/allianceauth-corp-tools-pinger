@@ -2,13 +2,14 @@
 from . import PingerTests
 
 
-def check_notes(test, note):
+def check_notes(test, note, test_description=True):
     test.assertIsNotNone(note)
 
-    test.assertEqual(
-        note["description"],
-        f"```This is a TEST!```\n"
-    )
+    if test_description:
+        test.assertEqual(
+            note["description"],
+            "```This is a TEST!```\n"
+        )
     test.assertEqual(
         note["fields"][0],
         {"name": "Character", "value": test.eveName1linkewho, "inline": True}
@@ -39,7 +40,7 @@ corpID: 2
 
         self.assertEqual(
             note["title"],
-            f"New Corp Application"
+            "New Corp Application"
         )
 
     def test_corp_acc_app(self):
@@ -57,7 +58,7 @@ corpID: 2
 
         self.assertEqual(
             note["title"],
-            f"Corp Application Accepted"
+            "Corp Application Accepted"
         )
 
     def test_corp_inv_app(self):
@@ -76,7 +77,7 @@ invokingCharID: 3
 
         self.assertEqual(
             note["title"],
-            f"Corp Invite Sent"
+            "Corp Invite Sent"
         )
 
     def test_corp_rej_app(self):
@@ -94,5 +95,58 @@ corpID: 2
 
         self.assertEqual(
             note["title"],
-            f"Corp Application Rejected"
+            "Corp Application Rejected"
+        )
+
+    def test_corp_withd_app(self):
+        notification_type = "CharAppWithdrawMsg"
+        notificaiton_text = \
+"""
+applicationText: 'This is a TEST!'
+charID: 1
+corpID: 2
+"""
+
+        note = self._build_notification(notification_type, notificaiton_text)
+
+        check_notes(self, note)
+
+        self.assertEqual(
+            note["title"],
+            "Corp Application Withdrawn"
+        )
+
+    def test_corp_accepted_app(self):
+        notification_type = "CharAppAcceptMsg"
+        notificaiton_text = \
+"""
+applicationText: 'This is a TEST!'
+charID: 1
+corpID: 2
+"""
+
+        note = self._build_notification(notification_type, notificaiton_text)
+
+        check_notes(self, note)
+
+        self.assertEqual(
+            note["title"],
+            "Member Joined Corp"
+        )
+
+    def test_corp_member_left(self):
+        notification_type = "CharLeftCorpMsg"
+        notificaiton_text = \
+"""
+charID: 1
+corpID: 2
+"""
+
+        note = self._build_notification(notification_type, notificaiton_text)
+
+        check_notes(self, note, False)
+
+        self.assertEqual(
+            note["title"],
+            "Character Left Corporation"
         )

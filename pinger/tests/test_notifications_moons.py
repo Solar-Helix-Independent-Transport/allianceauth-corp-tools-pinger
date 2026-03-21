@@ -4,7 +4,7 @@ from allianceauth.eveonline.evelinks import zkillboard
 from . import PingerTests
 
 
-class TestStructures(PingerTests):
+class TestMoons(PingerTests):
 
     def test_moon_fin(self):
         notification_type = "MoonminingExtractionFinished"

@@ -64,6 +64,56 @@ class CorpAppAcceptMsg(NotificationPing):
         self.force_at_ping = False
 
 
+class CharAppAcceptMsg(NotificationPing):
+    """
+    CharAppAcceptMsg
+
+    applicationText: ''
+    charID: 95954535
+    corpID: 680022174
+    """
+    def build_ping(self):
+        title = "Member Joined Corp"
+        app_char = get_eve_name_by_id(self._data['charID'])
+        app_corp = get_eve_name_by_id(self._data['corpID'])
+        eve_main = get_main_from_character_id(self._data['charID'])
+        footer = footer_from_notification(self._notification)
+
+        body = f"```{strip_tags(self._data['applicationText'])}```\n"
+
+        fields = [
+            {
+                'name': 'Character',
+                'value': f"[{app_char.name}]({evewho.character_url(self._data['charID'])})",
+                'inline': True
+            },
+            {
+                'name': 'Corporation',
+                'value': f"[{app_corp.name}]({zkillboard.corporation_url(self._data['corpID'])})",
+                'inline': True
+            },
+            {
+                'name': 'Main Character',
+                'value': eve_main,
+                'inline': True
+            }
+        ]
+
+        self.package_ping(
+            title,
+            body,
+            self._notification.timestamp,
+            fields=fields,
+            footer=footer,
+            colour=3066993
+        )
+
+        self._corp, self._alli, self._region = filter_from_notification(
+            self._notification
+        )
+        self.force_at_ping = False
+
+
 class CorpAppInvitedMsg(NotificationPing):
     category = "hr-admin"  # Structure Alerts
 
@@ -227,9 +277,120 @@ class CorpAppRejectMsg(NotificationPing):
         self.force_at_ping = False
 
 
-"""
-CharLeftCorpMsg
+class CharAppWithdrawMsg(NotificationPing):
+    category = "hr-admin"  # Structure Alerts
 
-charID: 2112779955
-corpID: 98577836
+    """
+    CharAppWithdrawMsg
+
+    applicationText: ''
+    charID: 95954535
+    corpID: 680022174
+    """
+
+    def build_ping(self):
+        title = "Corp Application Withdrawn"
+        app_char = get_eve_name_by_id(self._data['charID'])
+        app_corp = get_eve_name_by_id(self._data['corpID'])
+        eve_main = get_main_from_character_id(self._data['charID'])
+        footer = footer_from_notification(self._notification)
+
+        body = f"```{strip_tags(self._data['applicationText'])}```\n"
+
+        fields = [
+            {
+                'name': 'Character',
+                'value': f"[{app_char.name}]({evewho.character_url(app_char.eve_id)})",
+                'inline': True
+            },
+            {
+                'name': 'Corporation',
+                'value': f"[{app_corp.name}]({zkillboard.corporation_url(self._data['corpID'])})",
+                'inline': True
+            },
+            {
+                'name': 'Main Character',
+                'value': eve_main,
+                'inline': True
+            }
+        ]
+
+        self.package_ping(
+            title,
+            body,
+            self._notification.timestamp,
+            fields=fields,
+            footer=footer,
+            colour=15158332
+        )
+
+        self._corp, self._alli, self._region = filter_from_notification(
+            self._notification
+        )
+        self.force_at_ping = False
+
+
+class CharLeftCorpMsg(NotificationPing):
+    category = "hr-admin"  # Structure Alerts
+
+    """
+    CharLeftCorpMsg
+
+    charID: 95954535
+    corpID: 680022174
+    """
+
+    def build_ping(self):
+        title = "Character Left Corporation"
+        app_char = get_eve_name_by_id(self._data['charID'])
+        app_corp = get_eve_name_by_id(self._data['corpID'])
+        eve_main = get_main_from_character_id(self._data['charID'])
+        footer = footer_from_notification(self._notification)
+
+        body = f"{app_char.name} has left the corporation"
+
+        fields = [
+            {
+                'name': 'Character',
+                'value': f"[{app_char.name}]({evewho.character_url(app_char.eve_id)})",
+                'inline': True
+            },
+            {
+                'name': 'Corporation',
+                'value': f"[{app_corp.name}]({zkillboard.corporation_url(self._data['corpID'])})",
+                'inline': True
+            },
+            {
+                'name': 'Main Character',
+                'value': eve_main,
+                'inline': True
+            }
+        ]
+
+        self.package_ping(
+            title,
+            body,
+            self._notification.timestamp,
+            fields=fields,
+            footer=footer,
+            colour=15158332
+        )
+
+        self._corp, self._alli, self._region = filter_from_notification(
+            self._notification
+        )
+        self.force_at_ping = False
+
+
+
+"""
+CharAppAcceptMsg - Corp dirs get when  person joins a corp
+CharAppRejectMsg - Unknown
+CharAppWithdrawMsg - Corp dirs get when person withdraws app
+CharLeftCorpMsg - Corp dirs get when person leaves
+CorpAppAcceptMsg - unknown when it arrives ( char side? )
+CorpAppInvitedMsg - Unknown when it arrives ( char side? )
+CorpAppNewMsg - Corp dirs get when person applies to corp
+CorpAppRejectCustomMsg - Character gets when rejected with message?
+CorpAppRejectMsg - Character gets when rejected
 """
