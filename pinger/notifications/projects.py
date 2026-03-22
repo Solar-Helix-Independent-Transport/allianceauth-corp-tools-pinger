@@ -36,12 +36,12 @@ class CorporationGoalCreated(NotificationPing):
         fields = [
             {
                 'name': 'Creator',
-                'value': f"[{creator}]({evewho.character_url(self._data['creator_id'])})",
+                'value': f"[{creator.name}]({evewho.character_url(self._data['creator_id'])})",
                 'inline': True
             },
             {
                 'name': 'Corporation',
-                'value': app_corp,
+                'value': app_corp.name,
                 'inline': True
             }
         ]
@@ -85,17 +85,17 @@ class CorporationGoalClosed(NotificationPing):
             closer = creator
 
         title = "Corp Project Closed"
-        body = f"```{strip_tags(self._data['goal_name'])} Closed by {closer}```\n"
+        body = f"```{strip_tags(self._data['goal_name'])}```\nClosed by: {closer.name}"
 
         fields = [
             {
                 'name': 'Creator',
-                'value': f"[{creator}]({evewho.character_url(self._data['creator_id'])})",
+                'value': f"[{creator.name}]({evewho.character_url(self._data['creator_id'])})",
                 'inline': True
             },
             {
                 'name': 'Corporation',
-                'value': app_corp,
+                'value': app_corp.name,
                 'inline': True
             }
         ]
@@ -138,12 +138,12 @@ class CorporationGoalCompleted(NotificationPing):
         fields = [
             {
                 'name': 'Creator',
-                'value': f"[{creator}]({evewho.character_url(self._data['creator_id'])})",
+                'value': f"[{creator.name}]({evewho.character_url(self._data['creator_id'])})",
                 'inline': True
             },
             {
                 'name': 'Corporation',
-                'value': app_corp,
+                'value': app_corp.name,
                 'inline': True
             }
         ]
@@ -187,12 +187,12 @@ class CorporationGoalExpired(NotificationPing):
         fields = [
             {
                 'name': 'Creator',
-                'value': f"[{creator}]({evewho.character_url(self._data['creator_id'])})",
+                'value': f"[{creator.name}]({evewho.character_url(self._data['creator_id'])})",
                 'inline': True
             },
             {
                 'name': 'Corporation',
-                'value': app_corp,
+                'value': app_corp.name,
                 'inline': True
             }
         ]
@@ -235,12 +235,12 @@ class CorporationGoalLimitReached(NotificationPing):
         fields = [
             {
                 'name': 'Creator',
-                'value': f"[{creator}]({evewho.character_url(self._data['creator_id'])})",
+                'value': f"[{creator.name}]({evewho.character_url(self._data['creator_id'])})",
                 'inline': True
             },
             {
                 'name': 'Corporation',
-                'value': app_corp,
+                'value': app_corp.name,
                 'inline': True
             }
         ]
