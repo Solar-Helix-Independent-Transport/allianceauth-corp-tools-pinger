@@ -116,6 +116,92 @@ class TowerAlertMsg(NotificationPing):
                 cache_client.bzpopmin("ctpingermute")
 
 
+class TowerResourceAlertMsg(NotificationPing):
+    category = "starbase-attack"  # starbase Alerts
+
+    """
+    TowerResourceAlertMsg Example
+
+    allianceID: 1900696668
+    corpID: 680022174
+    moonID: 40066395
+    solarSystemID: 30001041
+    typeID: 16214
+    wants:
+    - quantity: 780
+      typeID: 4246
+    """
+
+    def build_ping(self):
+        try:
+            muted = MutedStructure.objects.get(
+                structure_id=self._data['moonID'])
+            if muted.expired():
+                muted.delete()
+            else:
+                raise MutedException()
+        except MutedStructure.DoesNotExist:
+            # no mutes move on
+            pass
+
+        system = get_system_from_id(self._data['solarSystemID'])
+        system_name = get_system_url_from_id(self._data['solarSystemID'])
+        moon = get_moon_name_from_id(self._data['moonID'])
+        region_name = get_region_url_from_system_id(self._data['solarSystemID'])
+        structure_type = get_item_name_from_id(self._data['typeID'])
+        footer = footer_from_notification(self._notification)
+
+        title = "Starbase low on Resources!"
+        body = "Resources Wanted!\n"
+        for r in self._data['wants']:
+            _t = get_item_name_from_id(r.get("typeID"))
+            body += f" - {_t} x {r.get("quantity")}\n"
+
+        fields = [
+            {
+                'name': 'Moon',
+                'value': moon,
+                'inline': True
+            },
+            {
+                'name': 'System',
+                'value': system_name,
+                'inline': True
+            },
+            {
+                'name': 'Region',
+                'value': region_name,
+                'inline': True
+            },
+            {
+                'name': 'Type',
+                'value': structure_type,
+                'inline': True
+            }
+        ]
+
+        self.package_ping(
+            title,
+            body,
+            self._notification.timestamp,
+            fields=fields,
+            footer=footer,
+            colour=15105570
+        )
+
+        self._corp, self._alli, self._region = filter_from_notification(
+            self._notification,
+            system=system
+        )
+
+        if moon:
+            epoch_time = int(time.time())
+            cache_client.zadd("ctpingermute", {moon: epoch_time})
+            rcount = cache_client.zcard("ctpingermute")
+            if rcount > 5:
+                cache_client.bzpopmin("ctpingermute")
+
+
 """
 TowerResourceAlertMsg
 

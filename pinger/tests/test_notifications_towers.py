@@ -61,3 +61,48 @@ typeID: 1
                 "inline": False
             }
         )
+
+    def test_fuel_tower(self):
+        notification_type = "TowerResourceAlertMsg"
+        notificaiton_text = \
+"""
+allianceID: 3
+corpID: 2
+moonID: 1
+solarSystemID: 1
+typeID: 1
+wants:
+- quantity: 780
+  typeID: 1
+- quantity: 500
+  typeID: 2
+"""
+
+        note = self._build_notification(notification_type, notificaiton_text)
+
+        self.assertIsNotNone(note)
+
+        self.assertEqual(
+            note["title"],
+            "Starbase low on Resources!"
+        )
+        self.assertEqual(
+            note["description"],
+            f"Resources Wanted!\n - Item Type 1 x 780\n - Item Type 2 x 500\n"
+        )
+        self.assertEqual(
+            note["fields"][0],
+            {"name": "Moon", "value": self.moon.name, "inline": True}
+        )
+        self.assertEqual(
+            note["fields"][1],
+            {"name": "System", "value": self.s1t, "inline": True}
+        )
+        self.assertEqual(
+            note["fields"][2],
+            {"name": "Region", "value": self.r1t, "inline": True}
+        )
+        self.assertEqual(
+            note["fields"][3],
+            {"name": "Type", "value": self.typeName.name, "inline": True}
+        )
