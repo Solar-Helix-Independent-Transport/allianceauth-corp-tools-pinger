@@ -102,16 +102,17 @@ class SovStructureReinforced(NotificationPing):
     def build_ping(self):
         system = get_system_from_id(self._data['solarSystemID'])
         system_name = get_system_url_from_id(self._data['solarSystemID'])
+        region_name = get_region_url_from_system_id(self._data['solarSystemID'])
         footer = footer_from_notification(self._notification)
 
         title = "Entosis notification"
-        body = "Sov Struct Reinforced in %s" % system.name
+        body = "Sov Struct Reinforced in %s" % system_name
         sov_type = "Unknown"
         if self._data['campaignEventType'] == 1:
-            body = "TCU Reinforced in %s" % system.name
+            body = "TCU Reinforced in %s" % system_name
             sov_type = "TCU"
         elif self._data['campaignEventType'] == 2:
-            body = "IHub Reinforced in %s" % system.name
+            body = "IHub Reinforced in %s" % system_name
             sov_type = "I-HUB"
 
         ref_time_delta = filetime_to_dt(self._data['decloakTime'])
@@ -123,6 +124,11 @@ class SovStructureReinforced(NotificationPing):
             {
                 'name': 'System',
                 'value': system_name,
+                'inline': True
+            },
+            {
+                'name': 'Region',
+                'value': region_name,
                 'inline': True
             },
             {

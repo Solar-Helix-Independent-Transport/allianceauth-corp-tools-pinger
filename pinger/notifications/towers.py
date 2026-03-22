@@ -154,8 +154,8 @@ class TowerResourceAlertMsg(NotificationPing):
         title = "Starbase low on Resources!"
         body = "Resources Wanted!\n"
         for r in self._data['wants']:
-            _t = get_item_name_from_id(r.get("typeID"))
-            body += f" - {_t} x {r.get("quantity")}\n"
+            _t = get_item_name_from_id(r.get('typeID'))
+            body += f" - {_t} x {r.get('quantity')}\n"
 
         fields = [
             {
