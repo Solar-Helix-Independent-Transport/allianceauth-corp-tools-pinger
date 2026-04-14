@@ -32,7 +32,7 @@ class WarDeclared(NotificationPing):
 
         title = "War Declared"
         declared_by_name = get_eve_name_by_id(self._data['declaredByID'])
-        against_by_name, _ = get_eve_name_by_id(self._data['againstID'])
+        against_by_name = get_eve_name_by_id(self._data['againstID'])
 
         body = f"War against `{against_by_name}` declared by `{declared_by_name}`\nWar HQ `{strip_tags(self._data['warHQ'])}`\nFighting can commence in {self._data['delayHours']} hours"
 

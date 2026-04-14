@@ -17,7 +17,8 @@ from .helpers import (
 logger = logging.getLogger(__name__)
 
 
-class AllAnchoringMsg(NotificationPing):
+class AllAnchoringMsg(NotificationPing): # NOQA
+    """ This no longer works """
     category = "secure-alert"  # SOV ADMIN ALERTS
 
     """
