@@ -1,8 +1,10 @@
+import datetime
 import json
 import logging
 from datetime import timedelta
 
 from corptools.models import Structure
+from corptools.models.audits import CharacterAudit
 from eve_sde.models import Region
 
 from django.core.exceptions import ValidationError
@@ -248,3 +250,18 @@ class StructureLoThreshold(models.Model):
 
     def __str__(self):
         return f"{self.structure.name}"
+
+
+class Notification:
+    character: CharacterAudit
+    notification_id: int
+    timestamp: datetime.datetime
+    notification_type: str
+    notification_text: str
+
+    def __init__(self, character: CharacterAudit, notification_id: int, timestamp: datetime.datetime, notification_type: str, notification_text: str):
+        self.character = character
+        self.notification_id = notification_id
+        self.timestamp = timestamp
+        self.notification_type = notification_type
+        self.notification_text = notification_text

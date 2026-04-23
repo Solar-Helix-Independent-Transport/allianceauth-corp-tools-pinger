@@ -29,6 +29,7 @@ from pinger.app_settings import CT_PINGER_VALID_STATES
 from pinger.models import DiscordWebhook, FuelPingRecord, Ping, PingerConfig
 
 from . import notifications
+from .models import Notification
 from .notifications.base import get_available_types
 from .providers import cache_client, esi_openapi
 
@@ -723,21 +724,6 @@ def corporation_notification_update(self, corporation_id):
         queue_corporation_notification_update.apply_async(
             args=[corporation_id, delay], priority=(TASK_PRIO + 1), countdown=1)
 
-
-class Notification:
-    # Settings
-    character = None
-    notification_id = None
-    timestamp = None
-    notification_type = None
-    notification_text = None
-
-    def __init__(self, character, notification_id, timestamp, notification_type, notification_text):
-        self.character = character
-        self.notification_id = notification_id
-        self.timestamp = timestamp
-        self.notification_type = notification_type
-        self.notification_text = notification_text
 
 
 @shared_task(bind=True, base=QueueOnce)
