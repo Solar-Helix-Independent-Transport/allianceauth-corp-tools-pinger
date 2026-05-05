@@ -188,7 +188,7 @@ class StructureLostArmor(NotificationPing):
                 self.timer = create_timer(
                     structure_name,
                     structure_type,
-                    system_name,
+                    system.name,
                     Timer.TimerType.HULL,
                     ref_date_time,
                     self._notification.character.character.corporation

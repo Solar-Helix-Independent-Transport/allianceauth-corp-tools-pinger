@@ -371,7 +371,7 @@ class SkyhookLostShields(NotificationPing):
                 self.timer = create_timer(
                     f"{planet_name} Skyhook",
                     structure_type,
-                    system_name,
+                    system.name,
                     Timer.TimerType.ARMOR,
                     _timeTill,
                     self._notification.character.character.corporation
