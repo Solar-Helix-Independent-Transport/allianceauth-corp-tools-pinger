@@ -355,9 +355,9 @@ def corporation_lo_check(self, corporation_id):
                 desc.append(f'```Liquid Ozone   Structure\n{low_block}```')
             if len(unknown):
                 desc.append("\n**Unknown Ozone Levels:**")
-                unknown_block = [f" -             {s.name}" for s in low]
+                unknown_block = [f" -             {s.name}" for s in unknown]
                 unknown_block = "\n".join(unknown_block)
-                desc.append(f'```~~Liquid Ozone~~   Structure\n{low_block}```')
+                desc.append(f'```~~Liquid Ozone~~   Structure\n{unknown_block}```')
 
             embed["description"] = "\n".join(desc)
 
