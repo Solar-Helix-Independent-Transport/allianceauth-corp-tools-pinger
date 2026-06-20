@@ -26,7 +26,10 @@ from esi.exceptions import HTTPNotModified
 from esi.models import Token
 
 from pinger.app_settings import CT_PINGER_VALID_STATES
-from pinger.models import DiscordWebhook, FuelPingRecord, Ping, PingerConfig
+from pinger.models import (
+    DiscordWebhook, FuelPingRecord, Ping, PingerConfig,
+    _webhook_passes_filters,
+)
 
 from . import notifications
 from .models import Notification
@@ -371,28 +374,19 @@ def corporation_lo_check(self, corporation_id):
                 "region_filter"
             )
 
-            logger.info(f"PINGER: FUEL Webhooks {webhooks.count()}")
+            logger.info(f"PINGER: LO Webhooks {webhooks.count()}")
 
             for hook in webhooks:
-                corporations = hook.corporation_filter.all(
-                ).values_list("corporation_id", flat=True)
+                if not _webhook_passes_filters(hook, corp_id=corporation_id):
+                    logger.info(f"PINGER: LO  Skipped Corp {corporation_id}")
+                    continue
 
-                corp_filter = corporation_id
-
-                if corp_filter is not None and len(corporations) > 0:
-                    if corp_filter not in corporations:
-                        logger.info(
-                            f"PINGER: LO  Skipped Corp {corp_filter} not in {corporations}"
-                        )
-                        continue
-
-                alert = False
                 p = Ping.objects.create(
                     notification_id=-1,
                     hook=hook,
                     body=json.dumps(embed),
                     time=timezone.now(),
-                    alerting=alert
+                    alerting=False
                 )
                 p.send_ping()
 
@@ -534,25 +528,16 @@ def corporation_gas_check(self, corporation_id):
             logger.info(f"PINGER: FUEL Webhooks {webhooks.count()}")
 
             for hook in webhooks:
-                corporations = hook.corporation_filter.all(
-                ).values_list("corporation_id", flat=True)
+                if not _webhook_passes_filters(hook, corp_id=corporation_id):
+                    logger.info(f"PINGER: GAS  Skipped Corp_ID:{corporation_id}")
+                    continue
 
-                corp_filter = corporation_id
-
-                if corp_filter is not None and len(corporations) > 0:
-                    if corp_filter not in corporations:
-                        logger.info(
-                            f"PINGER: FUEL  Skipped Corp_ID:{corp_filter} not in {corporations}"
-                        )
-                        continue
-
-                alert = False
                 p = Ping.objects.create(
                     notification_id=-2,
                     hook=hook,
                     body=json.dumps(embed),
                     time=timezone.now(),
-                    alerting=alert
+                    alerting=False
                 )
                 p.send_ping()
 
@@ -788,29 +773,12 @@ def process_notifications(self, cid, notifs):
             .prefetch_related("alliance_filter", "corporation_filter", "region_filter")
 
         for hook in webhooks:
-            regions = hook.region_filter.all().values_list("id", flat=True)
-            alliances = hook.alliance_filter.all().values_list("alliance_id", flat=True)
-            corporations = hook.corporation_filter.all(
-            ).values_list("corporation_id", flat=True)
-
             for p in l:
                 corp_filter, alli_filter, region_filter = p.get_filters()
 
-                if corp_filter is not None and len(corporations) > 0:
-                    if corp_filter not in corporations:
-                        logger.info(f"PINGER: {char.character.corporation_id} {cid} ignroing Ping {p} corp filter")
-                        continue
-
-                if alli_filter is not None and len(alliances) > 0:
-                    if alli_filter not in alliances:
-                        logger.info(f"PINGER: {char.character.corporation_id} {cid} ignroing Ping {p} alli filter")
-                        continue
-
-                if region_filter is not None and len(regions) > 0:
-                    if region_filter not in regions:
-                        logger.info(
-                            f"PINGER: {char.character.corporation_id} {cid} ignroing Ping {p} region filter")
-                        continue
+                if not _webhook_passes_filters(hook, corp_filter, alli_filter, region_filter):
+                    logger.info(f"PINGER: {char.character.corporation_id} {cid} ignoring Ping {p} filter")
+                    continue
 
                 ping_ob = Ping.objects.create(
                     notification_id=p._notification.notification_id,

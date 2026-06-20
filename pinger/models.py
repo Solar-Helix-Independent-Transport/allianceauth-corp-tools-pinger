@@ -18,6 +18,22 @@ from allianceauth.eveonline.models import EveAllianceInfo, EveCorporationInfo
 logger = logging.getLogger(__name__)
 
 
+def _webhook_passes_filters(hook, corp_id=None, alli_id=None, region_id=None):
+    if corp_id is not None:
+        corporations = hook.corporation_filter.all().values_list("corporation_id", flat=True)
+        if len(corporations) > 0 and corp_id not in corporations:
+            return False
+    if alli_id is not None:
+        alliances = hook.alliance_filter.all().values_list("alliance_id", flat=True)
+        if len(alliances) > 0 and alli_id not in alliances:
+            return False
+    if region_id is not None:
+        regions = hook.region_filter.all().values_list("id", flat=True)
+        if len(regions) > 0 and region_id not in regions:
+            return False
+    return True
+
+
 class PingType(models.Model):
     name = models.CharField(max_length=100)
     class_tag = models.CharField(max_length=100)
@@ -147,53 +163,30 @@ class FuelPingRecord(models.Model):
 
     def ping_task_ob(self, message):
         embed = self.build_ping_ob(message)
-        logger.info(
-            f"PINGER: FUEL Sending Pings for {self.structure.name}")
+        logger.info(f"PINGER: FUEL Sending Pings for {self.structure.name}")
+
+        corp_id = self.structure.corporation.corporation.corporation_id
+        alli = self.structure.corporation.corporation.alliance
+        alli_id = alli.alliance_id if alli else None
+        region_id = self.structure.system_name.constellation.region.id
 
         webhooks = DiscordWebhook.objects.filter(fuel_pings=True)\
             .prefetch_related("alliance_filter", "corporation_filter", "region_filter")
-        logger.info(
-            f"PINGER: FUEL Webhooks {webhooks.count()}")
+        logger.info(f"PINGER: FUEL Webhooks {webhooks.count()}")
 
         for hook in webhooks:
-            regions = hook.region_filter.all().values_list("id", flat=True)
-            alliances = hook.alliance_filter.all().values_list("alliance_id", flat=True)
-            corporations = hook.corporation_filter.all(
-            ).values_list("corporation_id", flat=True)
+            if not _webhook_passes_filters(hook, corp_id, alli_id, region_id):
+                logger.info(f"PINGER: FUEL  Skipped {self.structure.name}")
+                continue
 
-            corp_filter = self.structure.corporation.corporation.corporation_id
-            alli_filter = self.structure.corporation.corporation.alliance
-            if alli_filter:
-                alli_filter = alli_filter.alliance_id
-            region_filter = self.structure.system_name.constellation.region.id
-
-            if corp_filter is not None and len(corporations) > 0:
-                if corp_filter not in corporations:
-                    logger.info(
-                        f"PINGER: FUEL  Skipped {self.structure.name} Corp {corp_filter} not in {corporations}")
-                    continue
-
-            if alli_filter is not None and len(alliances) > 0:
-                if alli_filter not in alliances:
-                    logger.info(
-                        f"PINGER: FUEL  Skipped {self.structure.name} Alliance {alli_filter} not in {alli_filter}")
-                    continue
-
-            if region_filter is not None and len(regions) > 0:
-                if region_filter not in regions:
-                    logger.info(
-                        f"PINGER: FUEL  Skipped {self.structure.name} Region {region_filter} not in {regions}")
-                    continue
-
-            alert = False
-            if (self.structure.fuel_expires - timezone.now()).days < 3:
-                alert = True
-            p = Ping.objects.create(notification_id=-1*self.structure.structure_id,
-                                    hook=hook,
-                                    body=json.dumps(embed),
-                                    time=timezone.now(),
-                                    alerting=alert
-                                    )
+            alert = (self.structure.fuel_expires - timezone.now()).days < 3
+            p = Ping.objects.create(
+                notification_id=-1 * self.structure.structure_id,
+                hook=hook,
+                body=json.dumps(embed),
+                time=timezone.now(),
+                alerting=alert
+            )
             p.send_ping()
 
 
