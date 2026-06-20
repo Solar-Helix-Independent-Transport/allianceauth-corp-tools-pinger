@@ -280,7 +280,7 @@ def corporation_lo_check(self, corporation_id):
             corp = struct.corporation.corporation
 
         th_low = 1500000
-        th_crit = 25000
+        th_crit = 250000
 
         try:
             th_low = struct.lo_th.low
