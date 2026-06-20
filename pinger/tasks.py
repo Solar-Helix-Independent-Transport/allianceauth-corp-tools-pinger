@@ -763,7 +763,7 @@ def process_notifications(self, cid, notifs):
     # parse them into the parsers
     for n in new_notifs:
         if n.notification_id not in pinged_already:
-            logger.info(f"PINGER: {char.character.corporation_id} {cid} Processing: {note}")
+            logger.info(f"PINGER: {char.character.corporation_id} {cid} Processing: {n}")
             pinged_already.add(n.notification_id)
             try:
                 _t = n.notification_type.replace(
