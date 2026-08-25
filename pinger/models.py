@@ -2,20 +2,80 @@ import datetime
 import json
 import logging
 from datetime import timedelta
+from string import Formatter
+from typing import TYPE_CHECKING, ClassVar
 
 from corptools.models import Structure
 from corptools.models.audits import CharacterAudit
-from eve_sde.models import Region
+from eve_sde.models import Constellation, Region, SolarSystem
 
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models.deletion import CASCADE
 from django.utils import timezone
 
-from allianceauth.eveonline.evelinks import dotlan, eveimageserver
 from allianceauth.eveonline.models import EveAllianceInfo, EveCorporationInfo
+from allianceauth.groupmanagement.models import Group
+
+from .utils.discord import build_fuel_embed, role_id_for_group
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_FUEL_PING_COLOR = 15158332
+
+# The `str.format` keys `FuelThreshold.message` may use.
+MESSAGE_FORMAT_KEYS = frozenset(["days", "structure", "system"])
+
+
+class FuelPingConfigQuerySet(models.QuerySet["FuelPingConfig"]):
+    def usable(self):
+        """Configs that name at least one webhook."""
+        return self.filter(webhooks__isnull=False).distinct()
+
+    def matching(
+        self, structure: Structure, days_left: int
+    ) -> list[tuple["FuelPingConfig", "FuelThreshold"]]:
+        """The configs that should ping for `structure`, each with its triggered threshold.
+
+        A config raises the specificity bar only when it would actually ping, or when it
+        is flagged `blocks_broader`. Every config that pings at the resulting bar fires,
+        plus every `always_ping` config that pings at all.
+        """
+        hits = [
+            (config, level, config.threshold_for(days_left))
+            for config in self
+            if (level := config.level_for(structure)) is not None
+        ]
+
+        bar = max(
+            (
+                level
+                for config, level, threshold in hits
+                if threshold is not None or config.blocks_broader
+            ),
+            default=None,
+        )
+        if bar is None:
+            return []
+
+        return [
+            (config, threshold)
+            for config, level, threshold in hits
+            if threshold is not None and (level == bar or config.always_ping)
+        ]
+
+
+class FuelPingConfigManager(models.Manager["FuelPingConfig"]):
+    def get_queryset(self) -> FuelPingConfigQuerySet:
+        return FuelPingConfigQuerySet(self.model, using=self._db)
+
+    def usable(self) -> FuelPingConfigQuerySet:
+        return self.get_queryset().usable()
+
+    def matching(
+        self, structure, days_left: int
+    ) -> list[tuple["FuelPingConfig", "FuelThreshold"]]:
+        return self.get_queryset().matching(structure, days_left)
 
 
 def _webhook_passes_filters(hook, corp_id=None, alli_id=None, region_id=None):
@@ -61,7 +121,6 @@ class DiscordWebhook(models.Model):
     ping_types = models.ManyToManyField(PingType,
                                         blank=True)
 
-    fuel_pings = models.BooleanField(default=False)
     lo_pings = models.BooleanField(default=False)
     gas_pings = models.BooleanField(default=False)
 
@@ -78,6 +137,7 @@ class Ping(models.Model):
     time = models.DateTimeField()
     ping_sent = models.BooleanField(default=False)
     alerting = models.BooleanField(default=False)
+    content = models.TextField(default="", blank=True)
 
     def __str__(self):
         return "%s, %s" % (self.notification_id, str(self.time.strftime("%Y %m %d %H:%M:%S")))
@@ -99,95 +159,244 @@ class Ping(models.Model):
 
 
 class FuelPingRecord(models.Model):
-    lo_level = models.IntegerField(
-        null=True, default=None, blank=True)  # ozone level
-    last_ping_lo_level = models.IntegerField(
-        null=True, default=None, blank=True)  # ozone remaining @last ping
-    last_message = models.TextField(default="", blank=True)
-    date_empty = models.DateTimeField(
-        null=True, default=None, blank=True)  # expiry
-    last_ping_time = models.IntegerField(
-        null=True, default=None, blank=True)  # hours remaining @last ping
+    structure = models.ForeignKey(Structure, on_delete=models.CASCADE)
 
-    structure = models.ForeignKey(
-        Structure, on_delete=models.CASCADE, null=True, default=None)
+    config = models.ForeignKey(
+        "FuelPingConfig", on_delete=models.CASCADE, related_name="fuel_records"
+    )
+
+    last_message = models.TextField(default="", blank=True)  # admin readability only
+    date_empty = models.DateTimeField(
+        null=True, default=None, blank=True
+    )  # the fuel_expires this row is about
+    last_ping_time = models.IntegerField()  # days remaining @last ping
 
     last_update = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["structure", "config"], name="unique_fuel_record_per_config"
+            )
+        ]
 
     def __str__(self):
         return "Fuel Ping for: %s" % self.structure.name
 
-    def build_ping_ob(self, message):
-        _title = f"{self.structure.name}"
 
-        _system_name = f"[{self.structure.system_name.name}]({dotlan.solar_system_url(self.structure.system_name.name)})"
+class FuelPingConfig(models.Model):
+    name = models.CharField(max_length=100)
 
-        _url = eveimageserver.type_icon_url(self.structure.type_id, 64)
+    regions = models.ManyToManyField(
+        Region, related_name="fuel_ping_configs", blank=True
+    )
 
-        _services = ",".join(self.structure.structureservice_set.filter(
-            state='online').values_list('name', flat=True))
-        if len(_services) == 0:
-            _services = "None"
+    constellations = models.ManyToManyField(
+        Constellation, related_name="fuel_ping_configs", blank=True
+    )
 
-        corp_ticker = self.structure.corporation.corporation.corporation_ticker
-        corp_name = self.structure.corporation.corporation.corporation_name
-        corp_id = self.structure.corporation.corporation.corporation_id
-        footer = {"icon_url": eveimageserver.corporation_logo_url(corp_id, 64),
-                  "text": f"{corp_name} ({corp_ticker})"}
+    systems = models.ManyToManyField(
+        SolarSystem, related_name="fuel_ping_configs", blank=True
+    )
 
-        custom_data = {'color': 15158332,
-                       'title': _title,
-                       'footer': footer,
-                       'description': message,
-                       'fields': [{'name': 'System',
-                                   'value': _system_name,
-                                   'inline': False},
-                                  ]}
+    structures = models.ManyToManyField(
+        Structure, related_name="fuel_ping_configs", blank=True
+    )
 
-        if self.structure.fuel_expires:
-            daysLeft = (self.structure.fuel_expires - timezone.now()).days
+    webhooks = models.ManyToManyField(
+        DiscordWebhook,
+        related_name="fuel_ping_configs",
+        help_text="Webhooks this config pings. At least one is required. "
+        "Each webhook's own corporation / alliance / region "
+        "filters still apply on top.",
+    )
 
-            custom_data['fields'].append({'name': 'Fuel Expires',
-                                          'value': self.structure.fuel_expires.strftime("%Y-%m-%d %H:%M"),
-                                          'inline': True})
-            custom_data['fields'].append({'name': 'Days Remaining',
-                                          'value': str(daysLeft),
-                                          'inline': True})
-            custom_data['fields'].append({'name': 'Online Services',
-                                          'value': _services,
-                                          'inline': False})
+    always_ping = models.BooleanField(
+        default=False,
+        help_text="Fire whenever this config matches a structure, even if a more specific config also "
+        "matches.",
+    )
 
-        custom_data['image'] = {'url': _url}
+    blocks_broader = models.BooleanField(
+        default=False,
+        help_text="Suppress more general configs whenever this config matches a structure, "
+        "even at fuel levels where this config's own thresholds do not ping.",
+    )
 
-        return custom_data
+    objects: ClassVar[FuelPingConfigManager] = FuelPingConfigManager()
 
-    def ping_task_ob(self, message):
-        embed = self.build_ping_ob(message)
-        logger.info(f"PINGER: FUEL Sending Pings for {self.structure.name}")
+    if TYPE_CHECKING:
+        thresholds: models.manager.RelatedManager["FuelThreshold"]
 
-        corp_id = self.structure.corporation.corporation.corporation_id
-        alli = self.structure.corporation.corporation.alliance
-        alli_id = alli.alliance_id if alli else None
-        region_id = self.structure.system_name.constellation.region.id
+    class Meta:
+        default_permissions = ()
 
-        webhooks = DiscordWebhook.objects.filter(fuel_pings=True)\
-            .prefetch_related("alliance_filter", "corporation_filter", "region_filter")
-        logger.info(f"PINGER: FUEL Webhooks {webhooks.count()}")
+    def __str__(self):
+        return self.name
+
+    def level_for(self, structure: Structure):
+        """4 = structure, 3 = system, 2 = constellation, 1 = region, 0 = catch-all, None = no match."""
+        structure_ids = {s.id for s in self.structures.all()}
+        if structure.pk in structure_ids:
+            return 4
+
+        region_ids = {r.pk for r in self.regions.all()}
+        constellation_ids = {c.pk for c in self.constellations.all()}
+        system_ids = {s.pk for s in self.systems.all()}
+        system = structure.system_name
+        if system is not None:
+            if system.pk in system_ids:
+                return 3
+            constellation = system.constellation
+            if constellation is not None:
+                if constellation.pk in constellation_ids:
+                    return 2
+                if constellation.region_id in region_ids:
+                    return 1
+
+        if not (structure_ids or system_ids or constellation_ids or region_ids):
+            return 0  # no locations configured, this is a catch-all
+
+        return None
+
+    def threshold_for(self, days: int) -> "FuelThreshold | None":
+        """The threshold with the smallest `days` >= `days`; None if above all thresholds."""
+        return min(
+            (t for t in self.thresholds.all() if t.days >= days),
+            key=lambda t: t.days,
+            default=None,
+        )
+
+    def send_fuel_ping(self, structure: "Structure", threshold: "FuelThreshold", days_left: int):
+        system = structure.system_name
+        message = threshold.message.format(
+            days=days_left,
+            structure=structure.name,
+            system=system.name if system is not None else "Unknown",
+        )
+
+        embed = build_fuel_embed(structure, message, threshold.color, days_left)
+
+        corp = structure.corporation.corporation
+        alli = corp.alliance
+        region_id = None
+        if system is not None and system.constellation is not None:
+            region_id = system.constellation.region_id
+
+        webhooks = [
+            hook
+            for hook in self.webhooks.all()
+            if _webhook_passes_filters(
+                hook, corp.corporation_id, alli.alliance_id if alli else None, region_id
+            )
+        ]
+        logger.info(
+            f"PINGER: FUEL Sending Pings for {structure.name} to {len(webhooks)} webhooks"
+        )
+
+        content = threshold.build_mention_content()
+        body = json.dumps(embed)
 
         for hook in webhooks:
-            if not _webhook_passes_filters(hook, corp_id, alli_id, region_id):
-                logger.info(f"PINGER: FUEL  Skipped {self.structure.name}")
-                continue
-
-            alert = (self.structure.fuel_expires - timezone.now()).days < 3
             p = Ping.objects.create(
-                notification_id=-1 * self.structure.structure_id,
+                notification_id=-1 * structure.structure_id,
                 hook=hook,
-                body=json.dumps(embed),
+                body=body,
                 time=timezone.now(),
-                alerting=alert
+                alerting=bool(content),
+                content=content,
             )
             p.send_ping()
+
+
+class FuelThreshold(models.Model):
+    config = models.ForeignKey(
+        FuelPingConfig, on_delete=models.CASCADE, related_name="thresholds"
+    )
+
+    days = models.PositiveIntegerField(
+        validators=[MinValueValidator(1)],
+        help_text="Ping when the fuel left drops to this many days, or into the gap "
+        "below the next threshold down.",
+    )
+
+    repeat_days = models.PositiveSmallIntegerField(
+        null=True,
+        default=None,
+        blank=True,
+        validators=[MinValueValidator(1)],
+        help_text="Ping every N days where N is the value specified. Leave empty to ping only once on entering the band.",
+    )
+
+    message = models.TextField(
+        blank=True,
+        default="",
+        help_text="Ping text. Supports {days}, {structure} and {system} for formatting.",
+    )
+
+    color = models.PositiveIntegerField(
+        default=DEFAULT_FUEL_PING_COLOR, help_text="Embed color, as a decimal. Google 'discord color picker' to find the decimal value of the color you like."
+    )
+
+    ping_groups = models.ManyToManyField(
+        Group,
+        related_name="fuel_thresholds",
+        blank=True,
+        help_text="Ping the discord roles matching these groups."
+    )
+
+    ping_here = models.BooleanField(default=False)
+    ping_everyone = models.BooleanField(default=False)
+
+    class Meta:
+        default_permissions = ()
+        constraints = [
+            models.UniqueConstraint(
+                fields=["config", "days"], name="unique_threshold_per_config"
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.days} days"
+
+    def clean(self):
+        super().clean()
+
+        try:
+            keys = {
+                field
+                for _, field, _, _ in Formatter().parse(self.message or "")
+                if field is not None
+            }
+        except ValueError as e:
+            raise ValidationError({"message": f"Malformed substitution: {e}"})
+
+        unknown = keys - MESSAGE_FORMAT_KEYS
+        if unknown:
+            raise ValidationError(
+                {
+                    "message": "Unknown substitution(s) {}. Allowed: {}.".format(
+                        ", ".join(f"{{{k}}}" for k in sorted(unknown)),
+                        ", ".join(f"{{{k}}}" for k in sorted(MESSAGE_FORMAT_KEYS)),
+                    )
+                }
+            )
+
+    def build_mention_content(self) -> str:
+        """The `content` line of a fuel ping: @everyone, then @here, then one mention per group."""
+        mentions = []
+
+        if self.ping_everyone:
+            mentions.append("@everyone")
+        if self.ping_here:
+            mentions.append("@here")
+
+        for group in self.ping_groups.all():
+            role_id = role_id_for_group(group)
+            if role_id:
+                mentions.append(f"<@&{role_id}>")
+
+        return " ".join(mentions)
 
 
 class PingerConfig(models.Model):
@@ -221,7 +430,7 @@ class PingerConfig(models.Model):
         return super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"Pinger Configuration"
+        return "Pinger Configuration"
 
 
 class MutedStructure(models.Model):

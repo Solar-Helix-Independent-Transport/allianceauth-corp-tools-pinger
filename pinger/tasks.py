@@ -2,6 +2,7 @@ import datetime
 import hashlib
 import json
 import logging
+import re
 import time
 from datetime import timezone as tz
 from http.cookiejar import http2time
@@ -27,7 +28,7 @@ from esi.models import Token
 
 from pinger.app_settings import CT_PINGER_VALID_STATES
 from pinger.models import (
-    DiscordWebhook, FuelPingRecord, Ping, PingerConfig,
+    DiscordWebhook, FuelPingConfig, FuelPingRecord, Ping, PingerConfig,
     _webhook_passes_filters,
 )
 
@@ -196,58 +197,76 @@ def queue_corporation_notification_update(corporation_id, wait_time):
         args=[corporation_id], priority=(TASK_PRIO + 1), countdown=wait_time)
 
 
-def fuel_ping_builder(structure, days, message):
-    pingObj = FuelPingRecord.objects.filter(
-        last_message=message, last_ping_lo_level__isnull=True, structure=structure, date_empty=structure.fuel_expires).exists()
-    if not pingObj:
-        # logger.info("new ping: %s %s"% (_structure,_pingText))
-
-        n = FuelPingRecord(
-            structure=structure,
-            last_ping_time=days,
-            last_message=message,
-            date_empty=structure.fuel_expires)
-        n.save()
-        old = FuelPingRecord.objects.filter(
-            last_ping_lo_level__isnull=True, structure=structure).exclude(pk=n.pk)
-        if old.exists():
-            # logger.debug("new ping %s" % str(structure.name))
-            old.delete()
-        n.ping_task_ob(message)
-        return True
-    else:
-        # logger.info("already pinged: %s %s"% (_structure,_pingText))
-        return False
-
-
 @shared_task(bind=True, base=QueueOnce, max_retries=None)
 def corporation_fuel_check(self, corporation_id):
-    logger.info(
-        f"PINGER: FUEL Sending Starting Fuel Checks for {corporation_id}")
+    logger.info(f"PINGER: FUEL Sending Starting Fuel Checks for {corporation_id}")
     fuel_structures = Structure.objects.filter(
-        corporation__corporation__corporation_id=corporation_id)
+        corporation__corporation__corporation_id=corporation_id
+    ).select_related("system_name__constellation", "corporation__corporation__alliance")
+
+    # evaluated once for the whole run, not once per structure
+    configs = FuelPingConfig.objects.usable().prefetch_related(
+        "regions",
+        "constellations",
+        "systems",
+        "structures",
+        "thresholds",
+        "thresholds__ping_groups",
+        "webhooks",
+        "webhooks__corporation_filter",
+        "webhooks__alliance_filter",
+        "webhooks__region_filter",
+    )
+
+    now = datetime.datetime.now(tz.utc)
 
     for struct in fuel_structures:
-        daysLeft = 0
         if not struct.fuel_expires:
             continue  # use the eve notifications
 
-        daysLeft = (struct.fuel_expires - datetime.datetime.now(tz.utc)).days
+        days_left = (struct.fuel_expires - now).days
+        if days_left < 0:
+            continue  # goes low power
 
-        if daysLeft < 15:
-            if 0 <= daysLeft < 2:
-                fuel_ping_builder(struct, daysLeft, "Critical Fuel! :ambulance:")
-            elif 2 <= daysLeft < 3:
-                fuel_ping_builder(struct, daysLeft, "Critical Fuel! :ambulance: :eyes:")
-            elif 3 <= daysLeft < 8:
-                fuel_ping_builder(struct, daysLeft, "Low Fuel")
-            elif 8 <= daysLeft:
-                fuel_ping_builder(struct, daysLeft, "Low Fuel")
-        else:
-            old = FuelPingRecord.objects.filter(
-                last_ping_lo_level__isnull=True, structure=struct)
-            if old.exists():
-                old.delete()
+        matched = configs.matching(struct, days_left)
+        records: dict[int, FuelPingRecord] = {
+            r.config_id: r for r in FuelPingRecord.objects.filter(structure=struct)
+        }
+        keep = set()
+
+        for cfg, t_now in matched:
+            keep.add(cfg.pk)
+
+            rec = records.get(cfg.pk)
+            if rec and rec.date_empty != struct.fuel_expires:
+                rec = None  # refuelled
+
+            last = rec.last_ping_time if rec else None
+            t_prev = cfg.threshold_for(last) if last is not None else None
+
+            if t_now != t_prev:
+                fire = True
+            elif t_now.repeat_days is not None:
+                fire = (last - days_left) >= t_now.repeat_days
+            else:
+                fire = False
+
+            if fire:
+                cfg.send_fuel_ping(struct, t_now, days_left)
+                FuelPingRecord.objects.update_or_create(
+                    structure=struct,
+                    config=cfg,
+                    defaults={
+                        "last_ping_time": days_left,
+                        "date_empty": struct.fuel_expires,
+                        "last_message": t_now.message,
+                    },
+                )
+
+        if records:
+            FuelPingRecord.objects.filter(structure=struct).exclude(
+                config_id__in=keep
+            ).delete()
 
 
 def get_lo_key(corp_id):
@@ -850,11 +869,24 @@ def send_ping(self, ping_id):
     if ping_ob.time < CUTTOFF:
         return "TOO OLD!"
 
-    alertText = ""
-    if ping_ob.alerting and not ping_ob.hook.no_at_pings:
-        alertText = '"content": "@here", '
+    alert_text = ""
+    if not ping_ob.hook.no_at_pings:
+        if ping_ob.content:
+            alert_text = ping_ob.content    # for fuel
+        elif ping_ob.alerting:
+            alert_text = "@here"            # all other notifications
 
-    payload = f'{{{alertText}"embeds": [{ping_ob.body}]}}'
+    payload = {"embeds": [json.loads(ping_ob.body)]}
+    if alert_text:
+        payload["content"] = alert_text
+        # Webhooks default to `parse: ["users"]`, so mentions must be opted into:
+        # `parse: ["everyone"]` covers both @everyone and @here. Role mentions need
+        # an explicit id list because `parse` and `roles` cannot be combined.
+        payload["allowed_mentions"] = {
+            "parse": ["everyone"],
+            "roles": re.findall(r"<@&(\d+)>", alert_text),
+        }
+    payload = json.dumps(payload)
 
     logger.debug(payload)
     url = ping_ob.hook.discord_webhook

@@ -1,0 +1,38 @@
+/*
+ * Fuel threshold inline (pinger.admin.FuelThresholdInline).
+ *
+ * Stock Django renders stacked inlines as one uninterrupted run of form rows, so a
+ * config with several thresholds reads as a single wall of fields. Draw each
+ * threshold as its own card with a labelled header bar instead.
+ *
+ * Colours come from the admin's CSS custom properties, so this follows the
+ * light/dark theme.
+ */
+
+.inline-group fieldset.module.fuel-threshold-inline > .inline-related {
+    margin-bottom: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--body-bg);
+}
+
+.inline-group fieldset.module.fuel-threshold-inline > .inline-related > h3 {
+    margin: 0;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border-color);
+    border-radius: 5px 5px 0 0;
+    background: var(--darkened-bg);
+    color: var(--body-medium-color);
+    font-size: 0.8125rem;
+}
+
+/* The card's own border already closes the block off. */
+.inline-group fieldset.module.fuel-threshold-inline > .inline-related > fieldset > .form-row:last-child {
+    border-bottom: none;
+}
+
+/* "Add another Fuel threshold" is a sibling of the cards; match their shape. */
+.inline-group fieldset.module.fuel-threshold-inline > .add-row {
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+}
