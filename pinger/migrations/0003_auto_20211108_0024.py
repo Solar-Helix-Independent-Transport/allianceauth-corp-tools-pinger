@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('eveonline', '0014_auto_20210105_1413'),
+        ('eveonline', '0019_v5squash'),
         ('corptools', '0059_invtypematerials_met_type'),
         ('pinger', '0002_create_ping_types'),
     ]
