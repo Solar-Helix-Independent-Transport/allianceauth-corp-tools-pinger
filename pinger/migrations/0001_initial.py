@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('eveonline', '0014_auto_20210105_1413'),
+        ('eveonline', '0019_v5squash'),
         ('corptools', '0059_invtypematerials_met_type'),
     ]
 
